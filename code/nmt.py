@@ -26,7 +26,7 @@ from tqdm import tqdm
 from nltk.translate.bleu_score import corpus_bleu, sentence_bleu, SmoothingFunction
 
 from utils import read_corpus, batch_iter, Hypothesis
-from vocab import Vocab, VocabEntry
+from vocab import Vocab, VocabEntry, MultipleVocab
 from nmtmodel import NMTModel
 import config
 import paths
@@ -250,21 +250,21 @@ def decode():
     if config.sanity:
         max_step = 3
 
-    hypotheses = beam_search(model, data_src, max_step, replace=config.replace)
+        hypotheses = beam_search(model, data_src, max_step, replace=config.replace)
 
-    if config.target_in_decode:
-        top_hypotheses = [hyps[0] for hyps in hypotheses]
-        bleu_score = compute_corpus_level_bleu_score(data_tgt, top_hypotheses)
-        print(f'Corpus BLEU: {bleu_score}', file=sys.stderr)
+        if config.target_in_decode:
+            top_hypotheses = [hyps[0] for hyps in hypotheses]
+            #bleu_score = compute_corpus_level_bleu_score(data_tgt, top_hypotheses)
+            #print(f'Corpus BLEU: {bleu_score}', file=sys.stderr)
 
-    with open(paths.decode_output, 'w') as f:
-        for src_sent, hyps in zip(data_src, hypotheses):
-            top_hyp = hyps[0]
-            hyp_sent = ' '.join(top_hyp.value)
-            f.write(hyp_sent + '\n')
+        with open(paths.decode_output, 'w') as f:
+            for src_sent, hyps in zip(data_src, hypotheses):
+                top_hyp = hyps[0]
+                hyp_sent = ' '.join(top_hyp.value)
+                f.write(hyp_sent + '\n')
 
     bleu_command = "perl scripts/multi-bleu.perl "+data_tgt_path+" < "+paths.decode_output
-    # os.system(bleu_command)
+    os.system(bleu_command)
 
 
 def main():

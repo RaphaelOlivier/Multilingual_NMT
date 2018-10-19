@@ -1,13 +1,13 @@
 import torch
 
-language = "gl"
+language = "az"
 
 # General information
 printout = True
 sanity = False
 load = False
 pretraining = True
-replace = False
+replace = True
 seed = 1994
 test = True
 cuda = torch.cuda.is_available()
@@ -21,14 +21,14 @@ batch_size = 64
 # clip_grad = 5.0
 lr_decay = 0.2
 max_epoch = 100
-max_epoch_pretraining = 3
+max_epoch_pretraining = 1
 patience = 3
 max_num_trial = 3
-num_layers_encoder = 1
-num_layers_decoder = 1
+num_layers_encoder = 2
+num_layers_decoder = 2
 bidirectional_encoder = True
 attention = True
-residual = False
+residual = True
 # Network parameters
 hidden_size = 256
 embed_size = 256
@@ -41,9 +41,9 @@ max_decoding_time_step = 100
 greedy_search = False
 # Vocab options
 freq_cutoff = 2
-vocab_size = 10000
+vocab_size = 50000
 vocab_mono = False
-merge_target_vocab = True
+merge_target_vocab = False
 # Display options
 valid_niter = 200
 log_every = 10

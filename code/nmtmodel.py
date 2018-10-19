@@ -39,6 +39,7 @@ class NMTModel:
         self.decoder_optimizer = torch.optim.Adam(
             self.decoder.parameters(), lr=0.001, weight_decay=config.weight_decay)
         self.gpu = False
+        self.initialize()
 
         # initialize neural network layers...
     def update_lr(self, lr):
@@ -277,6 +278,13 @@ class NMTModel:
         model.decoder.load_state_dict(torch.load(dec_path))
 
         return model
+
+    def initialize(self):
+
+        for param in self.encoder.parameters():
+            torch.nn.init.uniform_(param, -0.1, 0.1)
+        for param in self.decoder.parameters():
+            torch.nn.init.uniform_(param, -0.1, 0.1)
 
     def load_params(self):
         enc_path = paths.model+".enc.pt"

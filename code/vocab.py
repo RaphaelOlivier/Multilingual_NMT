@@ -171,5 +171,5 @@ if __name__ == '__main__':
 
     main_vocab = MultipleVocab(all_vocabs)
 
-    pickle.dump(vocab, open(paths.vocab, 'wb'))
+    pickle.dump(main_vocab, open(paths.vocab, 'wb'))
     print('vocabulary saved to %s' % paths.vocab)
