@@ -16,7 +16,8 @@ class ResidualCells(nn.Module):
         self.cells = nn.ModuleList([nn.LSTMCell(lstm_sizes[i], lstm_sizes[i + 1])
                                     for i in range(nlayers)])
         self.dropouts = nn.ModuleList(
-            [VariationalDropout(config.dropout_layers, lstm_sizes[i + 1]) for i in range(nlayers)])
+            [VariationalDropout(config.dropout_lstm_states, lstm_sizes[i + 1]) for i in range(nlayers)])
+        self.dr = nn.Dropout(config.dropout_layers)
 
     def sample_masks(self):
 
@@ -32,11 +33,11 @@ class ResidualCells(nn.Module):
 
             residual = h
             h, c = self.cells[i](h, (previous_state[0][i], previous_state[0][i]))
-            h = self.dropouts[i](h)
             if self.lstm_sizes[i] == self.lstm_sizes[i+1]:
                 h = residual + h
-            new_state[0][i] = h
+            new_state[0][i] = self.dropouts[i](h)
             new_state[0][i] = c
+            h = self.dr(h)
 
         return h, new_state
 
