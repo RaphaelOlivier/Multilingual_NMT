@@ -1,6 +1,6 @@
 import torch
 
-language = "be"
+language = "az"
 
 # Helper language parameters
 if language == "az":
@@ -51,7 +51,7 @@ max_decoding_time_step = 100
 greedy_search = False
 # Vocab options
 freq_cutoff = 2
-vocab_size = 30000
+vocab_size = 25000
 vocab_mono = False
 merge_target_vocab = True
 # Display options
