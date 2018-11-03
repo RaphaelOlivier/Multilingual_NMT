@@ -114,19 +114,17 @@ class MultipleVocab(object):
     def __init__(self, vocabs):
         self.vocabs = vocabs
 
-    @property
     def src(self, helper=False):
         if not helper:
             return self.vocabs[config.language].src
         else:
-            self.vocabs[config.helper_language].src
+            return self.vocabs[config.helper_language].src
 
-    @property
     def tgt(self, helper=False):
         if not helper:
             return self.vocabs[config.language].tgt
         else:
-            self.vocabs[config.helper_language].tgt
+            return self.vocabs[config.helper_language].tgt
 
 
 if __name__ == '__main__':

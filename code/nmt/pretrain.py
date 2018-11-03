@@ -6,34 +6,19 @@ import time
 
 import numpy as np
 import torch
-from typing import List, Tuple, Dict, Set, Union
 from docopt import docopt
-from tqdm import tqdm
-from nltk.translate.bleu_score import corpus_bleu, sentence_bleu, SmoothingFunction
 
 from utils import read_corpus, batch_iter, Hypothesis
 from vocab import Vocab, VocabEntry
-from nmtmodel import NMTModel
+from nmt.nmtmodel import NMTModel
 import config
 import paths
 
 
-def train_encoder(model, train_data, dev_data):
+def train_encoder(model, train_data, dev_data, model_save_path, train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay):
     print_file = sys.stderr
     if config.printout:
         print_file = sys.stdout
-
-    train_batch_size = config.batch_size
-    valid_niter = config.valid_niter
-    log_every = config.log_every
-    model_save_path = paths.model
-    max_epoch = config.max_epoch_pretraining
-
-    if config.sanity:
-        log_every = 1
-        train_data = train_data[:150]
-        dev_data = dev_data[:150]
-        max_epoch = 2
 
     num_trial = 0
     train_iter = patience = cum_loss = report_loss = cumulative_src_words = report_src_words = 0
@@ -41,7 +26,6 @@ def train_encoder(model, train_data, dev_data):
     hist_valid_scores = []
     train_time = begin_time = time.time()
     print('begin Maximum Likelihood training')
-    lr = config.lr
     while True:
         epoch += 1
         model.train()
@@ -99,7 +83,8 @@ def train_encoder(model, train_data, dev_data):
 
                 # compute dev. ppl and bleu
                 # dev batch size can be a bit larger
-                dev_ppl = model.evaluate_ppl(dev_data, batch_size=128, encoder_only=True)
+                dev_ppl = model.evaluate_ppl(
+                    dev_data, batch_size=config.batch_size, encoder_only=True)
                 valid_metric = -dev_ppl
 
                 print('validation: iter %d, dev. ppl %f' % (train_iter, dev_ppl), file=print_file)
@@ -114,19 +99,19 @@ def train_encoder(model, train_data, dev_data):
                     model.save(model_save_path)
 
                     # You may also save the optimizer's state
-                elif patience < config.patience:
+                elif patience < max_patience:
                     patience += 1
                     print('hit patience %d' % patience, file=print_file)
 
-                    if patience == config.patience:
+                    if patience == max_patience:
                         num_trial += 1
                         print('hit #%d trial' % num_trial, file=print_file)
-                        if num_trial == config.max_num_trial:
+                        if num_trial == max_num_trial:
                             print('early stop!', file=print_file)
                             exit(0)
 
                         # decay learning rate, and restore from previously best checkpoint
-                        lr = lr * config.lr_decay
+                        lr = lr * lr_decay
                         model.update_lr(lr)
                         print('load previously best model and decay learning rate to %f' %
                               lr, file=print_file)
@@ -147,22 +132,10 @@ def train_encoder(model, train_data, dev_data):
             return
 
 
-def train_decoder(model, train_data, dev_data):
+def train_decoder(model, train_data, dev_data, model_save_path, train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay):
     print_file = sys.stderr
     if config.printout:
         print_file = sys.stdout
-
-    train_batch_size = config.batch_size
-    valid_niter = config.valid_niter
-    log_every = config.log_every
-    model_save_path = paths.model
-    max_epoch = config.max_epoch_pretraining
-
-    if config.sanity:
-        log_every = 1
-        train_data = train_data[:150]
-        dev_data = dev_data[:150]
-        max_epoch = 2
 
     num_trial = 0
     train_iter = patience = cum_loss = report_loss = cumulative_tgt_words = report_tgt_words = 0
@@ -170,7 +143,6 @@ def train_decoder(model, train_data, dev_data):
     hist_valid_scores = []
     train_time = begin_time = time.time()
     print('begin Maximum Likelihood training')
-    lr = config.lr
     while True:
         epoch += 1
         model.train()
@@ -228,7 +200,8 @@ def train_decoder(model, train_data, dev_data):
 
                 # compute dev. ppl and bleu
                 # dev batch size can be a bit larger
-                dev_ppl = model.evaluate_ppl(dev_data, batch_size=128, decoder_only=True)
+                dev_ppl = model.evaluate_ppl(
+                    dev_data, batch_size=config.batch_size, decoder_only=True)
                 valid_metric = -dev_ppl
 
                 print('validation: iter %d, dev. ppl %f' % (train_iter, dev_ppl), file=print_file)
@@ -243,19 +216,19 @@ def train_decoder(model, train_data, dev_data):
                     model.save(model_save_path)
 
                     # You may also save the optimizer's state
-                elif patience < config.patience:
+                elif patience < max_patience:
                     patience += 1
                     print('hit patience %d' % patience, file=print_file)
 
-                    if patience == config.patience:
+                    if patience == max_patience:
                         num_trial += 1
                         print('hit #%d trial' % num_trial, file=print_file)
-                        if num_trial == config.max_num_trial:
+                        if num_trial == max_num_trial:
                             print('early stop!', file=print_file)
                             exit(0)
 
                         # decay learning rate, and restore from previously best checkpoint
-                        lr = lr * config.lr_decay
+                        lr = lr * lr_decay
                         model.update_lr(lr)
                         print('load previously best model and decay learning rate to %f' %
                               lr, file=print_file)

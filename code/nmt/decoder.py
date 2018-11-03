@@ -4,88 +4,7 @@ import torch.nn.utils.rnn as rnn
 import numpy as np
 
 import config
-from encoder import init_weights
-
-
-class ResidualCells(nn.Module):
-
-    def __init__(self, nlayers, lstm_sizes):
-        super(ResidualCells, self).__init__()
-        self.nlayers = nlayers
-        self.lstm_sizes = lstm_sizes
-        self.cells = nn.ModuleList([nn.LSTMCell(lstm_sizes[i], lstm_sizes[i + 1])
-                                    for i in range(nlayers)])
-        self.dropouts = nn.ModuleList(
-            [VariationalDropout(config.dropout_lstm_states, lstm_sizes[i + 1]) for i in range(nlayers)])
-        self.dr = nn.Dropout(config.dropout_layers)
-
-    def sample_masks(self):
-
-        for i in range(self.nlayers):
-            self.dropouts[i].sample_mask()
-
-    def forward(self, h, previous_state):
-
-        new_state = previous_state[0].new_full(previous_state[0].size(), 0), \
-            previous_state[1].new_full(previous_state[1].size(), 0)
-
-        for i in range(self.nlayers):
-
-            residual = h
-            h, c = self.cells[i](h, (previous_state[0][i], previous_state[0][i]))
-            if self.lstm_sizes[i] == self.lstm_sizes[i+1]:
-                h = residual + h
-            new_state[0][i] = self.dropouts[i](h)
-            new_state[0][i] = c
-            h = self.dr(h)
-
-        return h, new_state
-
-
-class NormalCells(nn.Module):
-
-    def __init__(self, nlayers, lstm_sizes):
-        super(NormalCells, self).__init__()
-        self.nlayers = nlayers
-        self.lstm_sizes = lstm_sizes
-        self.dr = nn.Dropout(config.dropout_layers)
-        self.cells = nn.ModuleList([nn.LSTMCell(lstm_sizes[i], lstm_sizes[i + 1])
-                                    for i in range(nlayers)])
-
-    def forward(self, h, previous_state):
-
-        new_state = previous_state[0].new_full(previous_state[0].size(), 0), \
-            previous_state[1].new_full(previous_state[1].size(), 0)
-
-        for i in range(self.nlayers):
-
-            h, c = self.cells[i](h, (previous_state[0][i], previous_state[0][i]))
-            h = self.dr(h)
-            new_state[0][i] = h
-            new_state[0][i] = c
-
-        return h, new_state
-
-
-class VariationalDropout(nn.Module):
-
-    def __init__(self, dropout_rate, hidden_size):
-        super(VariationalDropout, self).__init__()
-
-        self.p = dropout_rate
-        self.hidden_size = hidden_size
-        self.mask = torch.autograd.Variable(torch.Tensor(
-            np.ones((1, hidden_size))), requires_grad=False).float().cuda()
-
-    def sample_mask(self):
-        new_mask = torch.Tensor((np.random.rand(1, self.hidden_size) < self.p) / self.p)
-        self.mask = torch.nn.Parameter(new_mask, requires_grad=False).float().cuda()
-
-    def forward(self, h):
-        if self.training:
-            return h * self.mask.expand(h.size())
-        else:
-            return h
+from nmt.layers import MultipleLSTMCells, init_weights
 
 
 class Decoder(nn.Module):
@@ -107,24 +26,22 @@ class Decoder(nn.Module):
             self.att_layer = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
             self.final_layers_input = self.hidden_size + self.hidden_size
         lstm_sizes = [self.input_lstm_size] + [self.hidden_size for i in range(self.nlayers)]
-        if config.residual:
-            self.lstm = ResidualCells(self.nlayers, lstm_sizes)
-        else:
-            self.lstm = NormalCells(self.nlayers, lstm_sizes)
+        self.lstm = MultipleLSTMCells(self.nlayers, lstm_sizes, residual=config.residual,
+                                      dropout_vertical=config.dropout_layers, dropout_horizontal=config.dropout_lstm_states)
 
         self.score_input = self.final_layers_input
-        self.has_output_layer = config.has_output_layer
+        self.has_output_layer = config.has_output_layer or (self.score_input != config.embed_size)
         if self.has_output_layer:
             self.score_input = config.embed_size
             self.output_layer = nn.Linear(self.final_layers_input, config.embed_size)
 
-        if self.score_input != config.embed_size:
-            self.tie_embeddings = False
-            self.score_layer = nn.Linear(self.score_input, vocab_size)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.init_context = torch.autograd.Variable(torch.Tensor(np.zeros(self.hidden_size))).cuda()
 
         self.apply(init_weights)
+
+    def get_params_but_embedding(self):
+        return list(self.att_layer.parameters())+list(self.lstm.parameters())+(list(self.output_layer.parameters()) if self.has_output_layer else [])
 
     def merge_directions(self, h):
         if config.bidirectional_encoder:

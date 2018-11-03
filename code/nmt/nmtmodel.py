@@ -1,43 +1,35 @@
 
-import math
 import pickle
-import sys
 import time
 
 import numpy as np
-from typing import List, Tuple, Dict, Set, Union
-from docopt import docopt
-from tqdm import tqdm
-from nltk.translate.bleu_score import corpus_bleu, sentence_bleu, SmoothingFunction
+from typing import List
 
 import torch
 import torch.nn as nn
-import torch.nn.utils.rnn as rnn
 
 from utils import Hypothesis, batch_iter
-from encoder import Encoder
-from decoder import Decoder
+from nmt.encoder import Encoder
+from nmt.decoder import Decoder
 import config
 import paths
 
 
 class NMTModel:
 
-    def __init__(self):
-
-        self.embed_size = config.embed_size
-        self.hidden_size = config.hidden_size
+    def __init__(self, helper=False):
+        self.helper = helper
         self.vocab = pickle.load(open(paths.vocab, 'rb'))
-
-        self.encoder = Encoder(len(self.vocab.src))
-        self.decoder = Decoder(len(self.vocab.tgt))
+        self.encoder = Encoder(len(self.vocab.src(self.helper)))
+        self.decoder = Decoder(len(self.vocab.tgt(self.helper)))
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.params = list(self.encoder.parameters())+list(self.decoder.parameters())
-        self.optimizer = torch.optim.Adam(self.params, lr=0.001, weight_decay=config.weight_decay)
+        self.optimizer = torch.optim.Adam(
+            self.params, lr=config.lr, weight_decay=config.weight_decay)
         self.encoder_optimizer = torch.optim.Adam(
-            self.encoder.parameters(), lr=0.001, weight_decay=config.weight_decay)
+            self.encoder.parameters(), lr=config.lr, weight_decay=config.weight_decay)
         self.decoder_optimizer = torch.optim.Adam(
-            self.decoder.parameters(), lr=0.001, weight_decay=config.weight_decay)
+            self.decoder.parameters(), lr=config.lr, weight_decay=config.weight_decay)
         self.gpu = False
         self.initialize()
 
@@ -108,7 +100,8 @@ class NMTModel:
                 with shape (batch_size, source_sentence_length, encoding_dim), or in orther formats
             decoder_init_state: decoder GRU/LSTM's initial state, computed from source encodings
         """
-        np_sents = [np.array([self.vocab.src[word] for word in sent]) for sent in src_sents]
+        np_sents = [np.array([self.vocab.src(self.helper)[word] for word in sent])
+                    for sent in src_sents]
         tensor_sents = [torch.LongTensor(s) for s in np_sents]
         if self.gpu:
             tensor_sents = [x.cuda() for x in tensor_sents]
@@ -131,7 +124,8 @@ class NMTModel:
                 log-likelihood of generating the gold-standard target sentence for
                 each example in the input batch
         """
-        np_sents = [np.array([self.vocab.tgt[word] for word in sent]) for sent in tgt_sents]
+        np_sents = [np.array([self.vocab.tgt(self.helper)[word] for word in sent])
+                    for sent in tgt_sents]
         tensor_sents = [torch.LongTensor(s) for s in np_sents]
         if self.gpu:
             tensor_sents = [x.cuda() for x in tensor_sents]
@@ -139,27 +133,9 @@ class NMTModel:
 
         return loss
 
-    def encode_to_loss(self, src_sents, update_params=True):
-        np_sents = [np.array([self.vocab.src[word] for word in sent]) for sent in src_sents]
-        tensor_sents = [torch.LongTensor(s) for s in np_sents]
-        if self.gpu:
-            tensor_sents = [x.cuda() for x in tensor_sents]
-        loss = self.encoder(tensor_sents, to_loss=True)
-        """
-        loss = torch.zeros(1)
-        if self.gpu:
-            loss = loss.cuda()
-        for i in range(len(tensor_sents)):
-            loss += self.criterion(preds[i][:-1], tensor_sents[i][1:])
-        """
-        if update_params:
-            loss.backward()
-            self.encoder_optimizer.step()
-            self.encoder_optimizer.zero_grad()
-        return loss.cpu().detach().numpy()
-
     def decode_to_loss(self, tgt_sents, update_params=True):
-        np_sents = [np.array([self.vocab.tgt[word] for word in sent]) for sent in tgt_sents]
+        np_sents = [np.array([self.vocab.tgt(self.helper)[word] for word in sent])
+                    for sent in tgt_sents]
         tensor_sents = [torch.LongTensor(s) for s in np_sents]
         if self.gpu:
             tensor_sents = [x.cuda() for x in tensor_sents]
@@ -191,7 +167,7 @@ class NMTModel:
                 score: float: the log-likelihood of the target sentence
         """
 
-        np_sent = np.array([self.vocab.src[word] for word in src_sent])
+        np_sent = np.array([self.vocab.src(self.helper)[word] for word in src_sent])
         tensor_sent = torch.LongTensor(np_sent)
         if self.gpu:
             tensor_sent = tensor_sent.cuda()
@@ -203,7 +179,7 @@ class NMTModel:
             tgt_sent = []
             for i in tgt_np[1:-1]:
                 if i >= 0:
-                    tgt_sent.append(self.vocab.tgt.id2word[i])
+                    tgt_sent.append(self.vocab.tgt(self.helper).id2word[i])
                 else:
                     tgt_sent.append(src_sent[-i])
             hypotheses = [Hypothesis(tgt_sent, score)]
@@ -217,7 +193,7 @@ class NMTModel:
                 tgt_sent = []
                 for i in tgt_np[1: -1]:
                     if i > 0:
-                        tgt_sent.append(self.vocab.tgt.id2word[i])
+                        tgt_sent.append(self.vocab.tgt(self.helper).id2word[i])
                     else:
                         tgt_sent.append(src_sent[-i])
                 hypotheses.append(Hypothesis(tgt_sent, score))
@@ -286,10 +262,12 @@ class NMTModel:
         for param in self.decoder.parameters():
             torch.nn.init.uniform_(param, -0.1, 0.1)
 
-    def load_params(self):
-        enc_path = paths.model+".enc.pt"
-        dec_path = paths.model+".dec.pt"
-        opt_path = paths.model+".opt.pt"
+    def load_params(self, model_path):
+        if model_path is None:
+            model_path = paths.model(helper=self.helper)
+        enc_path = model_path + ".enc.pt"
+        dec_path = model_path + ".dec.pt"
+        opt_path = model_path + ".opt.pt"
         self.encoder.load_state_dict(torch.load(enc_path))
         self.decoder.load_state_dict(torch.load(dec_path))
         self.optimizer.load_state_dict(torch.load(opt_path))

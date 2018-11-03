@@ -4,19 +4,15 @@ import torch.nn.utils.rnn as rnn
 import numpy as np
 
 import config
-
-
-def init_weights(m):
-    if isinstance(m, nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight)
+from nmt.layers import init_weights, AdvancedLSTM
 
 
 class Encoder(nn.Module):
     def __init__(self, vocab_size):
         super(Encoder, self).__init__()
         self.lookup = nn.Embedding(vocab_size, config.embed_size)
-        self.lstm = nn.LSTM(config.embed_size, config.hidden_size, num_layers=config.num_layers_encoder,
-                            bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers)
+        self.lstm = AdvancedLSTM(config.embed_size, config.hidden_size, num_layers=config.num_layers_encoder,
+                                 bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers)
         self.dr = nn.Dropout(config.dropout_layers)
         self.has_output_layer = False
         self.act = nn.Tanh()

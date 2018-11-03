@@ -1,4 +1,4 @@
 #!/bin/sh
 
-python code/nmt.py \
+python code/run.py \
     decode \

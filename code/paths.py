@@ -2,7 +2,10 @@ import config
 
 
 results_folder = "results/"
-model = results_folder+"model."+config.language+".bin"
+
+
+def model(helper): return results_folder+"model." + \
+    (config.helper_language if helper else config.language) + ".bin"
 
 
 def get_vocab_path(l): return "data/vocab/"+l+".bin"
