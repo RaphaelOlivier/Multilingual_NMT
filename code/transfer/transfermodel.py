@@ -4,6 +4,7 @@ import torch
 
 import transfer.transferconfig as config
 from nmt.nmtmodel import NMTModel
+from utils import load_partial_state_dict
 
 
 class TransferModel(NMTModel):
@@ -65,7 +66,9 @@ class TransferModel(NMTModel):
         if not helper:
             print("Switching in loading")
             model.switch()
-        model.encoder.load_state_dict(torch.load(enc_path))
-        model.decoder.load_state_dict(torch.load(dec_path))
+        print("Loading encoder")
+        load_partial_state_dict(model.encoder, torch.load(enc_path))
+        print("Loading decoder")
+        load_partial_state_dict(model.decoder, torch.load(dec_path))
 
         return model

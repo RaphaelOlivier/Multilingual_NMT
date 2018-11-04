@@ -11,7 +11,6 @@ from utils import read_corpus
 from vocab import Vocab, VocabEntry, MultipleVocab
 from nmt import routine
 import paths
-from nmt import pretrain
 from transfer.transfermodel import TransferModel
 import transfer.transferconfig as config
 
@@ -106,8 +105,8 @@ def train(load_helper=False, train_helper=False, load=True):
         #print("Pretraining the encoder")
         #pretrain.train_encoder(model, train_data, dev_data)
         print("Pretraining the decoder")
-        pretrain.train_decoder(model, train_data, dev_data, model_save_path,
-                               train_batch_size, valid_niter, log_every, config.max_epoch_pretraining, lr, max_patience, max_num_trial, lr_decay)
+        routine.train_decoder(model, train_data, dev_data, model_save_path,
+                              train_batch_size, valid_niter, log_every, config.max_epoch_pretraining, lr, max_patience, max_num_trial, lr_decay)
 
     model = routine.train_model(model, train_data, dev_data, model_save_path,
                                 train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay)

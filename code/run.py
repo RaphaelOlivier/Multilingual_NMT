@@ -22,6 +22,7 @@ import config
 from nmt import nmt
 from transfer import transfer
 from transfer import transferconfig
+from multi import multi
 from vocab import Vocab, VocabEntry, MultipleVocab
 
 
@@ -30,6 +31,15 @@ def simple_script(args):
         nmt.train()
     elif args['decode']:
         nmt.decode()
+    else:
+        raise RuntimeError(f'invalid command')
+
+
+def multi_script(args):
+    if args['train']:
+        multi.train()
+    elif args['decode']:
+        multi.decode()
     else:
         raise RuntimeError(f'invalid command')
 
@@ -63,9 +73,14 @@ def main():
     seed = int(config.seed)
     np.random.seed(seed * 13 // 7)
     torch.manual_seed(seed * 13 // 7)
-    if config.transfer:
+    if config.mode == "transfer":
+        print("Transfer mode")
         transfer_script(args)
+    elif config.mode == "multi":
+        print("Multitask mode")
+        multi_script(args)
     else:
+        print("Normal mode")
         simple_script(args)
 
 

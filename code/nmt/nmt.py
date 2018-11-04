@@ -7,13 +7,12 @@ import torch
 from typing import List
 from docopt import docopt
 
-from utils import read_corpus
+from utils import read_corpus, zip_data
 from vocab import Vocab, VocabEntry, MultipleVocab
 from nmt.nmtmodel import NMTModel
 import config
 from nmt import routine
 import paths
-from nmt import pretrain
 
 
 def train(helper=False):
@@ -26,8 +25,8 @@ def train(helper=False):
     dev_data_src = read_corpus(paths.dev_source, source='src')
     dev_data_tgt = read_corpus(paths.dev_target, source='tgt')
 
-    train_data = list(zip(train_data_src, train_data_tgt))
-    dev_data = list(zip(dev_data_src, dev_data_tgt))
+    train_data = zip_data(train_data_src, train_data_tgt)
+    dev_data = zip_data(dev_data_src, dev_data_tgt)
 
     train_batch_size = config.batch_size
     valid_niter = config.valid_niter
@@ -70,11 +69,12 @@ def train(helper=False):
         #print("Pretraining the encoder")
         #pretrain.train_encoder(model, train_data, dev_data)
         print("Pretraining the decoder")
-        pretrain.train_decoder(model, train_data, dev_data, model_save_path,
-                               train_batch_size, valid_niter, log_every, config.max_epoch_pretraining, lr, max_patience, max_num_trial, lr_decay)
+        routine.train_decoder(model, train_data, dev_data, model_save_path,
+                              train_batch_size, valid_niter, log_every, config.max_epoch_pretraining, lr, max_patience, max_num_trial, lr_decay)
 
     model = routine.train_model(model, train_data, dev_data, model_save_path,
                                 train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay)
+    model.to_cpu()
     exit(0)
 
 

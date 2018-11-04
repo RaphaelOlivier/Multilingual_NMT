@@ -1,7 +1,7 @@
 from config import *
-transfer_freeze = "decoder_embeddings"
+transfer_freeze = "none"
 load_helper_model = False
-train_helper_model = True
+train_helper_model = False
 decode_helper_model = False
 
 

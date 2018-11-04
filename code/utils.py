@@ -3,8 +3,29 @@ from typing import List
 from collections import namedtuple
 
 import numpy as np
+from torch.nn import Parameter
 
 Hypothesis = namedtuple('Hypothesis', ['value', 'score'])
+
+
+def zip_data(*args):
+    assert len(args) >= 2, "Missing an argument in zip_data"
+    if len(args) == 2:
+        src = args[0]
+        tgt = args[1]
+        assert len(src) == len(tgt)
+        key = None
+        return {key: list(zip(src, tgt))}
+
+    assert len(args) % 3 == 0, "Missing an argument in zip_data"
+    d = {}
+    for i in range(len(args)//3):
+        src = args[3*i]
+        tgt = args[3*i+1]
+        key = args[3*i+2]
+        assert key not in d.keys(), "Twice the same key in zip_data"
+        d[key] = list(zip(src, tgt))
+    return d
 
 
 def input_transpose(sents, pad_token):
@@ -35,7 +56,7 @@ def read_corpus(file_path, source='src'):
     return data
 
 
-def batch_iter(data, batch_size, shuffle=False):
+def batch_iter_one_way(data, batch_size, shuffle=False, key=None):
     """
     Given a list of examples, shuffle and slice them into mini-batches
     """
@@ -53,4 +74,65 @@ def batch_iter(data, batch_size, shuffle=False):
         src_sents = [e[0] for e in examples]
         tgt_sents = [e[1] for e in examples]
 
-        yield src_sents, tgt_sents
+        yield src_sents, tgt_sents, key
+
+
+def batch_iter(data, batch_size, shuffle=False):
+    if len(data.keys()) == 1:
+        for t in batch_iter_one_way(list(data.values())[0], batch_size, shuffle=shuffle, key=list(data.keys())[0]):
+            yield t
+
+    else:
+        keys = list(data.keys())
+        lens = np.array([len(data[k]) for k in keys])
+        max_key = keys[np.argmax(lens)]
+        multi_batch_num = batch_num = math.ceil(len(data[max_key]) / batch_size)
+        index_arrays = [list(range(l)) for l in lens]
+        if shuffle:
+            for a in index_arrays:
+                np.random.shuffle(a)
+        current_index = [0 for k in keys]
+
+        for j in range(batch_num):
+            for i, k in enumerate(keys):
+                a = index_arrays[i]
+                if current_index[i] >= lens[i]:
+                    current_index[i] = 0
+                    if shuffle:
+                        np.random.shuffle(a)
+                current_index[i] += batch_size
+                indices = a[current_index[i]-batch_size:current_index[i]]
+
+                examples = [data[k][idx] for idx in indices]
+
+                examples = sorted(examples, key=lambda e: len(e[0]), reverse=True)
+                src_sents = [e[0] for e in examples]
+                tgt_sents = [e[1] for e in examples]
+
+                yield src_sents, tgt_sents, k
+
+
+def load_partial_state_dict(model, state_dict):
+
+    model_state = model.state_dict()
+    loaded_keys = []
+    unloaded_keys = []
+    unseen_keys = []
+    for name, param in state_dict.items():
+        if name not in model_state:
+            unloaded_keys.append(name)
+            continue
+        if isinstance(param, Parameter):
+            # backwards compatibility for serialized parameters
+            param = param.data
+        model_state[name].copy_(param)
+        loaded_keys.append(name)
+    for name, param in model_state.items():
+        if name not in loaded_keys:
+            unseen_keys.append(name)
+    if len(unseen_keys) > 0:
+        print("Some params not found in file :", unseen_keys)
+    if len(unloaded_keys) > 0:
+        print("Some params in file not in model :", unloaded_keys)
+    if len(unseen_keys) == 0 and len(unloaded_keys) == 0:
+        print("Model and file matching !")
