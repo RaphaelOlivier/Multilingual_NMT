@@ -20,7 +20,8 @@ class NMTModel:
     def __init__(self, helper=False):
         self.helper = helper
         self.vocab = pickle.load(open(paths.vocab, 'rb'))
-        self.encoder = Encoder(len(self.vocab.src(self.helper)))
+        self.encoder = Encoder(len(self.vocab.src(self.helper)), config.embed_size, config.hidden_size, num_layers=config.num_layers_encoder,
+                               bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=False, state_projection=False)
         self.decoder = Decoder(len(self.vocab.tgt(self.helper)))
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.params = list(self.encoder.parameters())+list(self.decoder.parameters())
@@ -102,6 +103,8 @@ class NMTModel:
         """
         np_sents = [np.array([self.vocab.src(self.helper)[word] for word in sent])
                     for sent in src_sents]
+        if config.flip_source:
+            np_sents = [np.flip(a) for a in np_sents]
         tensor_sents = [torch.LongTensor(s) for s in np_sents]
         if self.gpu:
             tensor_sents = [x.cuda() for x in tensor_sents]
@@ -168,6 +171,8 @@ class NMTModel:
         """
 
         np_sent = np.array([self.vocab.src(self.helper)[word] for word in src_sent])
+        if config.flip_source:
+            np_sent = np.flip(np_sent)
         tensor_sent = torch.LongTensor(np_sent)
         if self.gpu:
             tensor_sent = tensor_sent.cuda()

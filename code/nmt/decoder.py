@@ -19,12 +19,11 @@ class Decoder(nn.Module):
         self.dr = nn.Dropout(config.dropout_layers)
         self.final_layers_input = self.hidden_size
         self.input_lstm_size = config.embed_size
-        self.attention = False
-        if config.attention:
-            self.attention = True
-            self.input_lstm_size = config.embed_size + self.hidden_size
-            self.att_layer = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
-            self.final_layers_input = self.hidden_size + self.hidden_size
+        # Attenton
+        self.input_lstm_size = config.embed_size + self.hidden_size
+        self.att_layer = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
+        self.final_layers_input = self.hidden_size + self.hidden_size
+
         lstm_sizes = [self.input_lstm_size] + [self.hidden_size for i in range(self.nlayers)]
         self.lstm = MultipleLSTMCells(self.nlayers, lstm_sizes, residual=config.residual,
                                       dropout_vertical=config.dropout_layers, dropout_horizontal=config.dropout_lstm_states)
@@ -54,8 +53,7 @@ class Decoder(nn.Module):
             return h
 
     def get_word_scores(self, decs, contexts):
-        if self.attention:
-            outs = torch.cat([decs, contexts], dim=1)
+        outs = torch.cat([decs, contexts], dim=1)
         else:
             outs = decs
         h = outs
@@ -84,7 +82,7 @@ class Decoder(nn.Module):
         o = self.dr(h)
         # attention
         context = None
-        if self.attention and attend:
+        if attend:
             att_scores = torch.bmm(encoded, o.unsqueeze(2))
             if len(att_scores[0]) == 11:
                 # print(attention_mask.cpu().detach().numpy())
@@ -156,34 +154,27 @@ class Decoder(nn.Module):
 
         output_list = []
         prev_context_vector = self.init_context.expand(state[0][-1].size())
-        if self.attention:
-            context_list = []
+        context_list = []
         if config.residual:
             self.lstm.sample_masks()
         for i in range(len(padded_tgt_sequence)):
-            if self.attention:
-                input = torch.cat([padded_tgt_sequence[i], prev_context_vector], dim=1)
-            else:
-                input = padded_tgt_sequence[i]
+            input = torch.cat([padded_tgt_sequence[i], prev_context_vector], dim=1)
             output, new_context_vector, state = self.one_step_decoding(
                 input, state, sorted_encoder_outputs, sorted_attention_mask, attend=attend)
             output_list.append(output.unsqueeze(0))
-            if self.attention:
-                context_list.append(new_context_vector.unsqueeze(0))
-                prev_context_vector = new_context_vector
+
+            context_list.append(new_context_vector.unsqueeze(0))
+            prev_context_vector = new_context_vector
 
         padded_dec = torch.cat(output_list, dim=0)
         list_dec = [padded_dec.transpose(0, 1)[i, :sorted_lens[i] - 1]
                     for i in range(len(tgt_sequences))]
         piled_dec = torch.cat(list_dec)
-        if self.attention:
-            padded_contexts = torch.cat(context_list, dim=0)
-            list_contexts = [padded_contexts.transpose(0, 1)[i, :sorted_lens[i] - 1]
-                             for i in range(len(tgt_sequences))]
-            piled_contexts = torch.cat(list_contexts)
-        # Attention
-        else:
-            piled_contexts = None
+
+        padded_contexts = torch.cat(context_list, dim=0)
+        list_contexts = [padded_contexts.transpose(0, 1)[i, :sorted_lens[i] - 1]
+                         for i in range(len(tgt_sequences))]
+        piled_contexts = torch.cat(list_contexts)
 
         # Scoring
         piled_scores = self.get_word_scores(piled_dec, piled_contexts)
@@ -219,10 +210,8 @@ class Decoder(nn.Module):
         while (time_step < max_step and current_word[0] != stop[0]):
             time_step += 1
             embed = self.dr(self.lookup(current_word))
-            if self.attention:
-                input = torch.cat([embed, prev_context_vector], dim=1)
-            else:
-                input = embed
+            input = torch.cat([embed, prev_context_vector], dim=1)
+
             if replace:
                 dec, new_context_vector, state, attended = self.one_step_decoding(
                     input, state, encoder_outputs, replace=replace)
@@ -235,7 +224,7 @@ class Decoder(nn.Module):
             scores = self.get_word_scores(dec, new_context_vector)
             current_score, current_word = torch.max(scores, dim=1)
 
-            if replace and self.attention and current_word.item() == 3:
+            if replace and current_word.item() == 3:
                 # make sure most attended word isn't unk
                 translated_word = -attended
             else:
@@ -287,10 +276,8 @@ class Decoder(nn.Module):
                 current_score = hypothesis[3]
 
                 embed = self.lookup(current_word)
-                if self.attention:
-                    input = torch.cat([embed, hypothesis[2]], dim=1)
-                else:
-                    input = embed
+                input = torch.cat([embed, hypothesis[2]], dim=1)
+
                 if replace:
                     dec, new_context_vector, current_state, attended = self.one_step_decoding(
                         input, current_state, encoder_outputs, replace=replace)
@@ -303,7 +290,7 @@ class Decoder(nn.Module):
                 probs = -nn.LogSoftmax(dim=1)(scores).squeeze()
                 probs = probs.detach().cpu().numpy()
                 max_indices = np.argpartition(probs, beam_size - 1)[:beam_size]
-                if replace and self.attention:
+                if replace:
                     max_indices[max_indices == 3] = -attended.item()
                 next_hypothesis = []
                 for i in max_indices:

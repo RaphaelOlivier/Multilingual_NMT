@@ -11,7 +11,6 @@ class TransferModel(NMTModel):
         super(TransferModel, self).__init__(helper=True)
         self.saved_helper_embeddings = None
         self.saved_main_embeddings = None
-        self.optimizer_main = None
 
     def switch(self):
         get_to_gpu = False
@@ -24,7 +23,7 @@ class TransferModel(NMTModel):
                 self.encoder.lookup = nn.Embedding(
                     len(self.vocab.src(helper=False)), config.embed_size)
                 weights_indices = torch.randperm(len(self.vocab.src(helper=False)))
-                weights = self.saved_helper_embeddings.weight[weights_indices]
+                self.encoder.lookup.weight.data = self.saved_helper_embeddings.weight[weights_indices]
             else:
                 self.encoder.lookup = deepcopy(self.saved_main_embeddings)
             self.params = self.get_main_params()
@@ -33,6 +32,7 @@ class TransferModel(NMTModel):
             self.helper = False
         else:
             self.saved_main_embeddings = deepcopy(self.encoder.lookup)
+            self.encoder.lookup = deepcopy(self.saved_helper_embeddings)
             self.params = list(self.encoder.parameters())+list(self.decoder.parameters())
             self.optimizer = torch.optim.Adam(
                 self.params, lr=config.lr, weight_decay=config.weight_decay)

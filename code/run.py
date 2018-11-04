@@ -44,7 +44,7 @@ def transfer_script(args):
         elif transferconfig.load_helper_model and (not transferconfig.train_helper_model):
             transfer.train(load_helper=True, train_helper=False)
         else:
-            raise RuntimeError(f'invalid transfer options')
+            transfer.train(load_helper=False, train_helper=True)
     elif args['decode']:
         if transferconfig.decode_helper_model:
             transfer.decode(decode_helper=True)

@@ -23,6 +23,7 @@ test = True
 cuda = torch.cuda.is_available()
 target_in_decode = True
 use_helper = False
+flip_source = False
 use_helper = use_helper and language in {"az", "be", "gl"}
 # General training parameters
 lr = 0.0002
@@ -38,13 +39,12 @@ max_num_trial = 3
 num_layers_encoder = 3
 num_layers_decoder = 3
 bidirectional_encoder = True
-attention = True
 residual = False
 hidden_size = 256
 embed_size = 256
 has_output_layer = True
 dropout_layers = 0.4
-dropout_lstm_states = 0.2
+dropout_lstm_states = 0.1
 # Search parameters
 beam_size = 5
 max_decoding_time_step = 100
