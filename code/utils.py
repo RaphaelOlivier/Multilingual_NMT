@@ -1,7 +1,7 @@
 import math
 from typing import List
 from collections import namedtuple
-
+import config
 import numpy as np
 from torch.nn import Parameter
 
@@ -45,13 +45,19 @@ def input_transpose(sents, pad_token):
 
 
 def read_corpus(file_path, source='src'):
+    print(file_path)
+    test = "test" in file_path
     data = []
+    counter = 0
     for line in open(file_path):
         sent = line.strip().split(' ')
         # only append <s> and </s> to the target sentence
-        if source == 'tgt':
-            sent = ['<s>'] + sent + ['</s>']
-        data.append(sent)
+        sent = ['<s>'] + sent + ['</s>']
+        if len(sent) <= config.max_len_corpus or test:
+            data.append(sent)
+        else:
+            counter += 1
+    print("Eliminated :", counter, "out of", len(data))
 
     return data
 

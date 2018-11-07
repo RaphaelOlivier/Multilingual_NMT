@@ -58,6 +58,8 @@ def train():
     pretraining_decoder = config.pretraining_decoder
     pretraining_encoders = config.pretraining_encoders
     if config.load:
+        #model = MultiWayModel.load(model_save_path)
+
         try:
             model = MultiWayModel.load(model_save_path)
             pretraining_decoder = False
@@ -84,15 +86,19 @@ def train():
     lr_decay = config.lr_decay
 
     if pretraining_decoder:
-        #print("Pretraining the encoder")
-        #pretrain.train_encoder(model, train_data, dev_data)
+        # print("Pretraining the encoder")
+        # pretrain.train_encoder(model, train_data, dev_data)
         print("Pretraining the decoder")
-        routine.train_decoder(model, train_data, dev_data_helper, model_save_path,
+        model.activate_discriminator = False
+        routine.train_decoder(model, train_data_helper, dev_data_helper, model_save_path,
+                              train_batch_size, valid_niter, log_every, config.max_epoch_pretraining_decoder, lr, max_patience, max_num_trial, lr_decay)
+        routine.train_decoder(model, train_data_low, dev_data_low, model_save_path,
                               train_batch_size, valid_niter, log_every, config.max_epoch_pretraining_decoder, lr, max_patience, max_num_trial, lr_decay)
 
     if pretraining_encoders:
-        #print("Pretraining the encoder")
-        #pretrain.train_encoder(model, train_data, dev_data)
+        # print("Pretraining the encoder")
+        # pretrain.train_encoder(model, train_data, dev_data)
+        model.activate_discriminator = False
         print("Pretraining the helper encoder")
         routine.train_model(model, train_data_helper, dev_data_helper, model_save_path,
                             train_batch_size, valid_niter, log_every, config.max_epoch_pretraining_helper, lr, max_patience, max_num_trial, lr_decay)
@@ -101,6 +107,7 @@ def train():
                             train_batch_size, valid_niter, log_every, config.max_epoch_pretraining_low, lr, max_patience, max_num_trial, lr_decay)
 
     print("Multitask training")
+    model.activate_discriminator = True
     model = routine.train_model(model, train_data, dev_data_low, model_save_path,
                                 train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay)
     model.to_cpu()
@@ -136,8 +143,8 @@ def decode():
 
     if config.target_in_decode:
         top_hypotheses = [hyps[0] for hyps in hypotheses]
-        #bleu_score = routine.compute_corpus_level_bleu_score(data_tgt, top_hypotheses)
-        #print(f'Corpus BLEU: {bleu_score}', file=sys.stderr)
+        # bleu_score = routine.compute_corpus_level_bleu_score(data_tgt, top_hypotheses)
+        # print(f'Corpus BLEU: {bleu_score}', file=sys.stderr)
 
     with open(paths.decode_output, 'w') as f:
         for src_sent, hyps in zip(data_src, hypotheses):

@@ -28,16 +28,22 @@ class NMTModel:
         self.params = list(self.encoder.parameters())+list(self.decoder.parameters())
         self.optimizer = torch.optim.Adam(
             self.params, lr=config.lr, weight_decay=config.weight_decay)
-        self.encoder_optimizer = torch.optim.Adam(
-            self.encoder.parameters(), lr=config.lr, weight_decay=config.weight_decay)
         self.decoder_optimizer = torch.optim.Adam(
             self.decoder.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+        self.encoder_optimizer = torch.optim.Adam(
+            self.encoder.parameters(), lr=config.lr, weight_decay=config.weight_decay)
         self.gpu = False
         self.initialize()
 
         # initialize neural network layers...
-    def update_lr(self, lr, **kwargs):
-        for param_group in self.optimizer.param_groups:
+    def update_lr(self, lr, encoder=False, decoder=False, **kwargs):
+        if encoder:
+            opt = self.encoder_optimizer
+        elif decoder:
+            opt = self.decoder_optimizer
+        else:
+            opt = self.optimizer
+        for param_group in opt.param_groups:
             param_group['lr'] = lr
 
     def to_gpu(self):
@@ -110,6 +116,22 @@ class NMTModel:
             self.decoder_optimizer.zero_grad()
         return loss.cpu().detach().numpy()
 
+    def encode_to_loss(self, src_sents, update_params=True, **kwargs):
+        # for s in src_sents:
+        #    print(s)
+        np_sents = [np.array([self.vocab.src(self.helper)[word] for word in sent])
+                    for sent in src_sents]
+        tensor_sents = [torch.LongTensor(s) for s in np_sents]
+        if self.gpu:
+            tensor_sents = [x.cuda() for x in tensor_sents]
+        loss = self.encoder(tensor_sents, to_loss=True)
+
+        if update_params:
+            loss.backward()
+            self.encoder_optimizer.step()
+            self.encoder_optimizer.zero_grad()
+        return loss.cpu().detach().numpy()
+
     def beam_search(self, src_sent: List[str], max_step=None, replace=False, **kwargs) -> List[Hypothesis]:
 
         np_sent = np.array([self.vocab.src(self.helper)[word] for word in src_sent])
@@ -154,11 +176,22 @@ class NMTModel:
         # you may want to wrap the following code using a context manager provided
         # by the NN library to signal the backend to not to keep gradient information
         # e.g., `torch.no_grad()`
-
-        for src_sents, tgt_sents, _ in batch_iter(dev_data, batch_size):
-            if encoder_only:
+        if encoder_only:
+            cum_src_words = 0.
+            for src_sents, tgt_sents, key in batch_iter(dev_data, batch_size):
                 loss = self.encode_to_loss(src_sents, update_params=False)
-            elif decoder_only:
+
+                src_word_num_to_predict = sum(len(s[1:])
+                                              for s in src_sents)  # omitting the leading `<s>`
+                cum_src_words += src_word_num_to_predict
+                cum_loss += loss
+            ppl = np.exp(cum_loss / cum_src_words)
+
+            return ppl
+
+        for src_sents, tgt_sents, key in batch_iter(dev_data, batch_size):
+
+            if decoder_only:
                 loss = self.decode_to_loss(tgt_sents, update_params=False)
             else:
                 loss = self(src_sents, tgt_sents, update_params=False)

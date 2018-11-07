@@ -11,14 +11,15 @@ elif language == "gl":
     helper_language = "pt"
 else:
     helper_language = "None"
-
+all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 # General information
 printout = True
 sanity = False
 load = True
-pretraining = True
+pretraining = False
+pretraining_encoder = False
 replace = True
-seed = 1995
+seed = 2000
 test = True
 cuda = torch.cuda.is_available()
 target_in_decode = True
@@ -29,16 +30,18 @@ use_helper = use_helper and language in {"az", "be", "gl"}
 lr = 0.001
 weight_decay = 0.00001
 batch_size = 16
+mono_batch_size = 8
 # clip_grad = 5.0
 lr_decay = 0.2
 max_epoch = 200
-max_epoch_pretraining = 4
+max_epoch_pretraining = 1
+max_epoch_pretraining_encoder = 1
 patience = 3
-max_num_trial = 3
+max_num_trial = 5
 # Network parameters
 num_layers_encoder = 2
 num_layers_decoder = 2
-bidirectional_encoder = True
+bidirectional_encoder = False
 residual = False
 hidden_size_encoder = 256
 hidden_size_decoder = 512
@@ -53,12 +56,13 @@ max_decoding_time_step = 100
 greedy_search = False
 # Vocab options
 freq_cutoff = 2
-vocab_size = 15000
-vocab_mono = False
+vocab_size = 30000
+vocab_mono = True
+max_len_corpus = 150
 merge_target_vocab = True
 # Display options
 valid_niter = 500
 log_every = 50
 
 # Low resource options
-mode = "multi"
+mode = "normal"

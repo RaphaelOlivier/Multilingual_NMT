@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 import torch
 import torch.nn.utils.rnn as rnn
 import numpy as np
@@ -29,41 +30,51 @@ class Encoder(nn.Module):
             self.use_state_projection = True
             self.state_projection = nn.Linear(context_projection, state_projection)
 
+        self.out_forward = nn.Linear(self.hidden_size, self.embed_size)
+        self.criterion = nn.CrossEntropyLoss(reduction="sum")
+
         self.apply(init_weights)
 
     def forward(self, sequences, to_loss=False):
-        lens = [len(seq) for seq in sequences]
+        lens = [len(seq)-1 for seq in sequences]
         bounds = [0]
         for l in lens:
             bounds.append(bounds[-1]+l)
-        piled_sequence = torch.cat(sequences)
+        piled_sequence = torch.cat([reversed(s)[:-1] for s in sequences])
         piled_embeddings = self.dr(self.lookup(piled_sequence))
         embed_sequences = [piled_embeddings[bounds[i]:bounds[i+1]] for i in range(len(sequences))]
         packed_sequence = rnn.pack_sequence(embed_sequences)
         encoded, last_state = self.lstm(packed_sequence)
 
         encoded_pad, lengths = rnn.pad_packed_sequence(encoded)
+
+        if to_loss:
+            encoded_piled = torch.cat([encoded_pad[:lens[i], i] for i in range(len(lens))])
+            out = self.out_forward(encoded_piled)
+            scores = F.linear(out, self.lookup.weight)
+            tgt = torch.cat([reversed(s)[1:] for s in sequences])
+            return self.criterion(scores, tgt)
         if not self.use_context_projection:
             context_pad = encoded_pad
         else:
             context_pad = self.act(self.context_projection(self.dr(encoded_pad)))
-        state = self.get_decoder_init_state(context_pad)
+        state = self.get_decoder_init_state(last_state)
         context = rnn.pack_padded_sequence(context_pad, lengths)
 
         return context, state
 
     def encode_one_sent(self, seq):
-        embeddings = self.dr(self.lookup(seq)).unsqueeze(1)
+        embeddings = self.dr(self.lookup(reversed(seq)[:-1])).unsqueeze(1)
         encoded, last_state = self.lstm(embeddings)
         if not self.use_context_projection:
             context = encoded
         else:
             context = self.act(self.context_projection(self.dr(encoded)))
-        state = self.get_decoder_init_state(context)
+        state = self.get_decoder_init_state(last_state)
         return context, state
 
-    def get_decoder_init_state(self, context):
-        last_state = context[0]
+    def get_decoder_init_state(self, state):
+        last_state = state[0][-1]
         if not self.use_state_projection:
             state = last_state
         else:
