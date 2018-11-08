@@ -20,8 +20,10 @@ class NMTModel:
     def __init__(self, helper=False):
         self.helper = helper
         self.vocab = pickle.load(open(paths.vocab, 'rb'))
+        stproj = None if (config.hidden_size_encoder * (2 if config.bidirectional_encoder else 1)
+                          == config.hidden_size_decoder) else config.hidden_size_decoder
         self.encoder = Encoder(len(self.vocab.src(self.helper)), config.embed_size, config.hidden_size_encoder, num_layers=config.num_layers_encoder,
-                               bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=None, state_projection=None)
+                               bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=None, state_projection=stproj)
         self.decoder = Decoder(len(self.vocab.tgt(self.helper)),
                                context_projection=None)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')

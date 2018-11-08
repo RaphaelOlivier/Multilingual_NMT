@@ -44,8 +44,8 @@ def train(helper=False):
     if config.load:
         try:
             model = NMTModel.load(model_save_path)
-            #pretraining = False
-            #pretraining_encoder = False
+            pretraining = False
+            pretraining_encoder = False
         except:
             print("Impossible to load the model ; creating a new one.")
             model = NMTModel(helper=False)
