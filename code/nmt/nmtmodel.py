@@ -21,9 +21,9 @@ class NMTModel:
         self.helper = helper
         self.vocab = pickle.load(open(paths.vocab, 'rb'))
         self.encoder = Encoder(len(self.vocab.src(self.helper)), config.embed_size, config.hidden_size_encoder, num_layers=config.num_layers_encoder,
-                               bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=config.context_size, state_projection=config.hidden_size_decoder)
+                               bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=None, state_projection=None)
         self.decoder = Decoder(len(self.vocab.tgt(self.helper)),
-                               context_projection=config.context_size)
+                               context_projection=None)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.params = list(self.encoder.parameters())+list(self.decoder.parameters())
         self.optimizer = torch.optim.Adam(

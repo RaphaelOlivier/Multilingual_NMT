@@ -16,7 +16,7 @@ all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 printout = True
 sanity = False
 load = True
-pretraining = False
+pretraining = True
 pretraining_encoder = False
 replace = True
 seed = 2000
@@ -37,12 +37,12 @@ max_epoch = 200
 max_epoch_pretraining = 1
 max_epoch_pretraining_encoder = 1
 patience = 3
-max_num_trial = 5
+max_num_trial = 3
 # Network parameters
 num_layers_encoder = 2
 num_layers_decoder = 2
-bidirectional_encoder = False
-residual = False
+bidirectional_encoder = True
+residual = True
 hidden_size_encoder = 256
 hidden_size_decoder = 512
 embed_size = 256
@@ -57,7 +57,7 @@ greedy_search = False
 # Vocab options
 freq_cutoff = 2
 vocab_size = 30000
-vocab_mono = True
+vocab_mono = False
 max_len_corpus = 150
 merge_target_vocab = True
 # Display options
