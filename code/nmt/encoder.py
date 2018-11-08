@@ -1,83 +1,74 @@
 import torch.nn as nn
-import torch.nn.functional as F
 import torch
 import torch.nn.utils.rnn as rnn
 import numpy as np
 
 import config
+import paths
 from nmt.layers import init_weights, AdvancedLSTM
+from allennlp.modules.elmo import Elmo
 
 
 class Encoder(nn.Module):
-    def __init__(self, vocab_size, embed_size, hidden_size, num_layers=1,
-                 bidirectional=True, dropout=0, context_projection=None, state_projection=None):
+    def __init__(self, vocab_size):
         super(Encoder, self).__init__()
-        self.hidden_size = hidden_size
-        self.embed_size = embed_size
-        self.lookup = nn.Embedding(vocab_size, self.embed_size)
-        self.lstm = AdvancedLSTM(self.embed_size, self.hidden_size, num_layers=num_layers,
-                                 bidirectional=bidirectional, dropout=dropout)
-        self.dr = nn.Dropout(dropout)
+        # self.lookup = nn.Embedding(vocab_size, config.embed_size)
+        options_file, weights_file = paths.get_elmo_files()
+        self.lookup = Elmo(options_file, weights_file, 1, dropout=config.dropout_layers)
+        self.lstm = AdvancedLSTM(config.embed_size, config.hidden_size, num_layers=config.num_layers_encoder,
+                                 bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers)
+        self.dr = nn.Dropout(config.dropout_layers)
+        self.has_output_layer = False
         self.act = nn.Tanh()
-
-        self.use_context_projection = False
-        if context_projection is not None:
-            self.use_context_projection = True
-            self.context_projection = nn.Linear(
-                self.hidden_size * (2 if bidirectional else 1), context_projection)
-        self.use_state_projection = False
-        if state_projection is not None:
-            self.use_state_projection = True
-            self.state_projection = nn.Linear(context_projection, state_projection)
-
-        self.out_forward = nn.Linear(self.hidden_size, self.embed_size)
-        self.criterion = nn.CrossEntropyLoss(reduction="sum")
+        if config.hidden_size != config.embed_size:
+            self.has_output_layer = True
+            self.output_layer = nn.Linear(config.hidden_size, config.embed_size)
+        self.criterion = nn.CrossEntropyLoss(reduction='sum')
 
         self.apply(init_weights)
 
+    def get_word_scores(self, piled_encoded):
+        h = self.dr(piled_encoded)
+        if self.has_output_layer:
+            h = self.act(self.output_layer(h))
+        o = self.dr(h).matmul(self.lookup.weight.t())
+        return o
+
     def forward(self, sequences, to_loss=False):
-        lens = [len(seq)-1 for seq in sequences]
-        bounds = [0]
-        for l in lens:
-            bounds.append(bounds[-1]+l)
-        piled_sequence = torch.cat([reversed(s)[:-1] for s in sequences])
-        piled_embeddings = self.dr(self.lookup(piled_sequence))
-        embed_sequences = [piled_embeddings[bounds[i]:bounds[i+1]] for i in range(len(sequences))]
-        packed_sequence = rnn.pack_sequence(embed_sequences)
+        # lens = [len(seq) for seq in sequences]
+        # bounds = [0]
+        # for l in lens:
+        #     bounds.append(bounds[-1]+l)
+        # piled_sequence = torch.cat(sequences)
+        # print(piled_sequence)
+        piled_sequence = sequences
+        elmo_lookup = self.lookup(piled_sequence)
+        embeddings, mask = elmo_lookup['elmo_representations'][0].transpose(0, 1), elmo_lookup['mask']
+        lens = mask.sum(dim=1)
+        embeddings = self.dr(embeddings)
+        packed_sequence = rnn.pack_padded_sequence(embeddings, lens)
         encoded, last_state = self.lstm(packed_sequence)
-
-        encoded_pad, lengths = rnn.pad_packed_sequence(encoded)
-
-        if to_loss:
-            encoded_piled = torch.cat([encoded_pad[:lens[i], i] for i in range(len(lens))])
-            out = self.out_forward(encoded_piled)
-            scores = F.linear(out, self.lookup.weight)
-            tgt = torch.cat([reversed(s)[1:] for s in sequences])
-            return self.criterion(scores, tgt)
-        if not self.use_context_projection:
-            context_pad = encoded_pad
+        if not to_loss:
+            return encoded, last_state
         else:
-            context_pad = self.act(self.context_projection(self.dr(encoded_pad)))
-        state = self.get_decoder_init_state(last_state)
-        context = rnn.pack_padded_sequence(context_pad, lengths)
-
-        return context, state
+            encoded_pad, lengths = rnn.pad_packed_sequence(encoded)
+            encoded_pad = encoded_pad.view(len(sequences[0]),
+                                           len(sequences), 2, config.hidden_size)
+            fwd = encoded_pad[:, :, 0].transpose(0, 1)
+            bwd = encoded_pad[:, :, 1].transpose(0, 1)
+            encoded_list = [fwd[i, :lengths[i]-1]
+                            for i in range(len(lengths))] + [bwd[i, 1:lengths[i]] for i in range(len(lengths))]
+            # encoded_list = [fwd[i, :lengths[i]-1] for i in range(len(lengths))]
+            piled_encoded = torch.cat(encoded_list)
+            scores = self.get_word_scores(piled_encoded)
+            labels = torch.cat([s[1:] for s in sequences] + [s[:-1] for s in sequences])
+            #labels = torch.cat([s[1:] for s in sequences])
+            loss = self.criterion(scores, labels)
+            return loss
+            # return [scores[bounds[i]:bounds[i+1]] for i in range(len(sequences))]
 
     def encode_one_sent(self, seq):
-        embeddings = self.dr(self.lookup(reversed(seq)[:-1])).unsqueeze(1)
-        encoded, last_state = self.lstm(embeddings)
-        if not self.use_context_projection:
-            context = encoded
-        else:
-            context = self.act(self.context_projection(self.dr(encoded)))
-        state = self.get_decoder_init_state(last_state)
-        return context, state
-
-    def get_decoder_init_state(self, state):
-        last_state = state[0][-1]
-        if not self.use_state_projection:
-            state = last_state
-        else:
-            state = self.act(self.state_projection(self.dr(last_state)))
-
-        return state
+        elmo_lookup = self.lookup(seq)
+        embeddings, mask = elmo_lookup['elmo_representations'][0].transpose(0, 1), elmo_lookup['mask']
+        encoded, last_state = self.lstm(self.dr(embeddings))
+        return encoded, last_state

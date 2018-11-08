@@ -1,5 +1,5 @@
 from config import *
-transfer_freeze = "none"
+transfer_freeze = "decoder_embeddings"
 load_helper_model = False
 train_helper_model = False
 decode_helper_model = False
