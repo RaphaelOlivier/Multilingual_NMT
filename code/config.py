@@ -56,7 +56,7 @@ max_decoding_time_step = 100
 greedy_search = False
 # Vocab options
 freq_cutoff = 2
-vocab_size = 30000
+vocab_size = 10000
 vocab_mono = False
 max_len_corpus = 150
 merge_target_vocab = True
