@@ -15,7 +15,7 @@ else:
 # General information
 printout = True
 sanity = False
-load = False
+load = True
 pretraining = True
 replace = True
 seed = 1995

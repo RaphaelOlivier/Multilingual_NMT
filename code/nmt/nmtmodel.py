@@ -172,8 +172,7 @@ class NMTModel:
                 score: float: the log-likelihood of the target sentence
         """
 
-        np_sent = np.array([self.vocab.src(self.helper)[word] for word in src_sent])
-        tensor_sent = torch.LongTensor(np_sent)
+        tensor_sent = batch_to_ids([src_sent])
         if self.gpu:
             tensor_sent = tensor_sent.cuda()
         src_encoding, decoder_init_state = self.encoder.encode_one_sent(tensor_sent)

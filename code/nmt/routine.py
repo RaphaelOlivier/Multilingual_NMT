@@ -162,10 +162,12 @@ def beam_search(model, test_data_src, max_step=None, replace=False):
 
     hypotheses = []
     for src_sent in tqdm(test_data_src, desc='Decoding', file=sys.stdout):
-        print(src_sent)
+        # print(src_sent)
         example_hyps = model.beam_search(
             src_sent, max_step, replace=replace)
 
         hypotheses.append(example_hyps)
+
+        # print(example_hyps[0])
 
     return hypotheses
