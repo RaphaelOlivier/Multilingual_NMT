@@ -43,8 +43,10 @@ def train():
 
     if config.sanity:
         log_every = 1
-        train_data = {train_data[key]: train_data[key][:150] for key in train_data.keys()}
-        dev_data = {dev_data[key]: dev_data[key][:150] for key in dev_data.keys()}
+        for key in train_data.keys():
+            train_data[key] = train_data[key][:150]
+        for key in dev_data.keys():
+            dev_data[key] = dev_data[key][:150]
         max_epoch = 2
     pretraining = config.pretraining
     pretraining_encoder = config.pretraining_encoder
