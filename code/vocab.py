@@ -136,8 +136,8 @@ if __name__ == '__main__':
         print('read in source sentences: %s' % sc)
         print('read in target sentences: %s' % tg)
 
-        src_sents = read_corpus(sc, source='src')
-        tgt_sents = read_corpus(tg, source='tgt')
+        src_sents = read_corpus(sc, source='src', char=True)
+        tgt_sents = read_corpus(tg, source='tgt', char=True)
         mono_sents = None
         if config.vocab_mono and lg in ["az", "be", "gl"]:
             print('read in monolingual sentences')
@@ -167,7 +167,7 @@ if __name__ == '__main__':
               (lg, len(vocab.src), len(vocab.tgt)))
         all_vocabs[lg] = vocab
 
-    if config.mode == "shared":
+    if config.mode == "shared" or "char":
         for lg1, lg2 in [("az", "tr"), ("gl", "pt"), ("be", "ru")]:
             for word_helper in all_vocabs[lg2].src.word2id.keys():
                 all_vocabs[lg1].src.add(word_helper)

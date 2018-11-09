@@ -12,7 +12,7 @@ from docopt import docopt
 from tqdm import tqdm
 from nltk.translate.bleu_score import corpus_bleu, sentence_bleu, SmoothingFunction
 
-from utils import read_corpus, batch_iter, Hypothesis
+from utils import read_corpus, batch_iter, batch_iter_ratio, Hypothesis
 from vocab import Vocab, VocabEntry, MultipleVocab
 from nmt.nmtmodel import NMTModel
 import config
@@ -51,15 +51,38 @@ def train_model(model, train_data, dev_data, model_save_path, train_batch_size=N
     hist_valid_scores = []
     train_time = begin_time = time.time()
     print('begin Maximum Likelihood training')
+
+    if config.use_helper and config.start_ratio == -1:
+        helper_ratio = math.ceil(len(train_data['helper']) / len(train_data['low']))
+    elif config.use_helper:
+        helper_ratio = config.start_ratio
+    else:
+        helper_ratio = 0
+
+    if config.use_helper:
+        helper_min = config.end_ratio * len(train_data['low'])
+        helper_decrement = max(
+            (helper_ratio - config.end_ratio) / max_epoch,
+            0
+        )
+        helper_ratio += helper_decrement
+
     while True:
         epoch += 1
         model.train()
-        for src_sents, tgt_sents, key in batch_iter(train_data, batch_size=train_batch_size, shuffle=True):
+
+        if config.use_helper:
+            helper_ratio = max(helper_min, helper_ratio - helper_decrement)
+
+        # TODO: Generalize this batch iter ratio
+        for src_sents, tgt_sents, key in batch_iter_ratio(train_data, batch_size=train_batch_size,
+                                                          ratio=helper_ratio, shuffle=True):
+        # for src_sents, tgt_sents, key in batch_iter(train_data, batch_size=train_batch_size, shuffle=True):
+
             train_iter += 1
             batch_size = len(src_sents)
 
             # (batch_size)
-
             loss = model(src_sents, tgt_sents, key=key)
 
             report_loss += loss

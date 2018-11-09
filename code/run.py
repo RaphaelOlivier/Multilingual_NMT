@@ -24,6 +24,7 @@ from shared import shared
 from transfer import transfer
 from transfer import transferconfig
 from multi import multi
+from char import char
 from vocab import Vocab, VocabEntry, MultipleVocab
 
 
@@ -50,6 +51,15 @@ def shared_script(args):
         shared.train()
     elif args['decode']:
         shared.decode()
+    else:
+        raise RuntimeError(f'invalid command')
+
+
+def char_script(args):
+    if args['train']:
+        char.train()
+    elif args['decode']:
+        char.decode()
     else:
         raise RuntimeError(f'invalid command')
 
@@ -92,6 +102,9 @@ def main():
     elif config.mode == "shared":
         print("Shared encoder mode")
         shared_script(args)
+    elif config.mode == "char":
+        print("Character model")
+        char_script(args)
     else:
         print("Normal mode")
         simple_script(args)

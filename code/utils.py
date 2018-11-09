@@ -44,13 +44,16 @@ def input_transpose(sents, pad_token):
     return sents_t
 
 
-def read_corpus(file_path, source='src'):
+def read_corpus(file_path, source='src', char=False):
     print(file_path)
     test = "test" in file_path
     data = []
     counter = 0
     for line in open(file_path):
-        sent = line.strip().split(' ')
+        if char:
+            sent = list(line.strip())
+        else:
+            sent = line.strip().split(' ')
         # only append <s> and </s> to the target sentence
         if source == "tgt":
             sent = ['<s>'] + sent + ['</s>']
@@ -117,6 +120,70 @@ def batch_iter(data, batch_size, shuffle=False):
                 tgt_sents = [e[1] for e in examples]
 
                 yield src_sents, tgt_sents, k
+
+
+def batch_iter_ratio(data, batch_size, ratio, shuffle=False):
+    if len(data.keys()) == 1:
+        for t in batch_iter_one_way(list(data.values())[0], batch_size, shuffle, key=list(data.keys())[0]):
+            yield t
+
+    # elif ratio == -1:
+    #     keys = list(data.keys())
+    #     lens = np.array([len(data[k]) for k in keys])
+    #     max_key = keys[np.argmax(lens)]
+    #     multi_batch_num = batch_num = math.ceil(len(data[max_key]) / batch_size)
+    #     index_arrays = [list(range(l)) for l in lens]
+    #     if shuffle:
+    #         for a in index_arrays:
+    #             np.random.shuffle(a)
+    #     current_index = [0 for k in keys]
+    #
+    #     for j in range(batch_num):
+    #         for i, k in enumerate(keys):
+    #             if current_index[i] >= lens[i]:
+    #                 current_index[i] = 0
+    #                 if shuffle:
+    #                     np.random.shuffle(index_arrays[i])
+    #             current_index[i] += batch_size
+    #             indices = index_arrays[i][current_index[i]-batch_size:current_index[i]]
+    #
+    #             examples = [data[k][idx] for idx in indices]
+    #
+    #             examples = sorted(examples, key=lambda e: len(e[0]), reverse=True)
+    #             src_sents = [e[0] for e in examples]
+    #             tgt_sents = [e[1] for e in examples]
+    #
+    #             yield src_sents, tgt_sents, k
+
+    # TODO: Curently only can handle a single helper language
+    else:
+        ratio = round(ratio)
+        num_helper = min(len(data['helper']), ratio*len(data['low']))
+        lens = (len(data['low']), num_helper)
+        batch_num = math.ceil(sum(lens) / batch_size)
+        helper_ind = np.random.choice(np.arange(len(data['helper'])), lens[1])
+        low_ind = np.arange(lens[1])
+        np.random.shuffle(low_ind)
+        inds = (low_ind, helper_ind)
+        src_types = ['low'] + ['helper'] * ratio
+
+        idxs = {'low': 0, 'helper': 1}
+        src_idx = [0, 0]
+        for batch in range(batch_num):
+            examples = []
+            total = 0
+            while total < batch_size and (src_idx[0] < lens[0] or src_idx[1] < lens[1]):
+                src = np.random.choice(src_types)
+                key = idxs[src]
+                if src_idx[key] >= lens[key]:
+                    key = not key
+                examples.append(data[src][inds[key][src_idx[key]]])
+                src_idx[key] += 1
+                total += 1
+            examples = sorted(examples, key=lambda e: len(e[0]), reverse=True)
+            src_sents = [e[0] for e in examples]
+            tgt_sents = [e[1] for e in examples]
+            yield src_sents, tgt_sents, key
 
 
 def load_partial_state_dict(model, state_dict):
