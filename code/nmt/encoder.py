@@ -36,11 +36,11 @@ class Encoder(nn.Module):
         self.apply(init_weights)
 
     def forward(self, sequences, to_loss=False):
-        lens = [len(seq)-1 for seq in sequences]
+        lens = [len(seq) for seq in sequences]
         bounds = [0]
         for l in lens:
             bounds.append(bounds[-1]+l)
-        piled_sequence = torch.cat([s[:-1] for s in sequences])
+        piled_sequence = torch.cat(sequences)
         piled_embeddings = self.dr(self.lookup(piled_sequence))
         embed_sequences = [piled_embeddings[bounds[i]:bounds[i+1]] for i in range(len(sequences))]
         packed_sequence = rnn.pack_sequence(embed_sequences)
@@ -49,7 +49,7 @@ class Encoder(nn.Module):
         encoded_pad, lengths = rnn.pad_packed_sequence(encoded)
 
         if to_loss:
-            encoded_piled = torch.cat([encoded_pad[:lens[i], i] for i in range(len(lens))])
+            encoded_piled = torch.cat([encoded_pad[:lens[i]-1, i] for i in range(len(lens))])
             out = self.out_forward(encoded_piled)
             scores = F.linear(out, self.lookup.weight)
             tgt = torch.cat([s[1:] for s in sequences])
@@ -64,7 +64,7 @@ class Encoder(nn.Module):
         return context, state
 
     def encode_one_sent(self, seq):
-        embeddings = self.dr(self.lookup(seq[:-1])).unsqueeze(1)
+        embeddings = self.dr(self.lookup(seq)).unsqueeze(1)
         encoded, last_state = self.lstm(embeddings)
         if not self.use_context_projection:
             context = encoded

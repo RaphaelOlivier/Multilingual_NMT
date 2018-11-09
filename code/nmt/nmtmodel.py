@@ -17,12 +17,12 @@ import paths
 
 class NMTModel:
 
-    def __init__(self, helper=False):
+    def __init__(self, helper=False, add_tokens_src=0):
         self.helper = helper
         self.vocab = pickle.load(open(paths.vocab, 'rb'))
         stproj = None if (config.hidden_size_encoder * (2 if config.bidirectional_encoder else 1)
                           == config.hidden_size_decoder) else config.hidden_size_decoder
-        self.encoder = Encoder(len(self.vocab.src(self.helper)), config.embed_size, config.hidden_size_encoder, num_layers=config.num_layers_encoder,
+        self.encoder = Encoder(len(self.vocab.src(self.helper))+add_tokens_src, config.embed_size, config.hidden_size_encoder, num_layers=config.num_layers_encoder,
                                bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=None, state_projection=stproj)
         self.decoder = Decoder(len(self.vocab.tgt(self.helper)),
                                context_projection=None)
@@ -196,7 +196,7 @@ class NMTModel:
             if decoder_only:
                 loss = self.decode_to_loss(tgt_sents, update_params=False)
             else:
-                loss = self(src_sents, tgt_sents, update_params=False)
+                loss = self(src_sents, tgt_sents, key=key, update_params=False)
             cum_loss += loss
             tgt_word_num_to_predict = sum(len(s[1:])
                                           for s in tgt_sents)  # omitting the leading `<s>`

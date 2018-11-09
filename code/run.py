@@ -20,6 +20,7 @@ import numpy as np
 import torch
 import config
 from nmt import nmt
+from shared import shared
 from transfer import transfer
 from transfer import transferconfig
 from multi import multi
@@ -40,6 +41,15 @@ def multi_script(args):
         multi.train()
     elif args['decode']:
         multi.decode()
+    else:
+        raise RuntimeError(f'invalid command')
+
+
+def shared_script(args):
+    if args['train']:
+        shared.train()
+    elif args['decode']:
+        shared.decode()
     else:
         raise RuntimeError(f'invalid command')
 
@@ -79,6 +89,9 @@ def main():
     elif config.mode == "multi":
         print("Multitask mode")
         multi_script(args)
+    elif config.mode == "shared":
+        print("Shared encoder mode")
+        shared_script(args)
     else:
         print("Normal mode")
         simple_script(args)

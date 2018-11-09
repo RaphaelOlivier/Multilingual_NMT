@@ -167,6 +167,15 @@ if __name__ == '__main__':
               (lg, len(vocab.src), len(vocab.tgt)))
         all_vocabs[lg] = vocab
 
+    if config.mode == "shared":
+        for lg1, lg2 in [("az", "tr"), ("gl", "pt"), ("be", "ru")]:
+            for word_helper in all_vocabs[lg2].src.word2id.keys():
+                all_vocabs[lg1].src.add(word_helper)
+            for word_helper in all_vocabs[lg2].tgt.word2id.keys():
+                all_vocabs[lg1].tgt.add(word_helper)
+            print("For shared mode, added helper words to lr vocab, new sizes",
+                  len(all_vocabs[lg1].src), len(all_vocabs[lg1].tgt))
+
     main_vocab = MultipleVocab(all_vocabs)
 
     pickle.dump(main_vocab, open(paths.vocab, 'wb'))

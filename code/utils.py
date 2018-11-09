@@ -84,6 +84,7 @@ def batch_iter_one_way(data, batch_size, shuffle=False, key=None):
 
 
 def batch_iter(data, batch_size, shuffle=False):
+
     if len(data.keys()) == 1:
         for t in batch_iter_one_way(list(data.values())[0], batch_size, shuffle=shuffle, key=list(data.keys())[0]):
             yield t

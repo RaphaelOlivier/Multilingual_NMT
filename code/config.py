@@ -16,7 +16,7 @@ all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 printout = True
 sanity = False
 load = True
-pretraining = True
+pretraining = False
 pretraining_encoder = False
 replace = True
 seed = 2000
@@ -27,7 +27,7 @@ use_helper = False
 # flip_source = False  # keep at false
 use_helper = use_helper and language in {"az", "be", "gl"}
 # General training parameters
-lr = 0.001
+lr = 0.0001
 weight_decay = 0.00001
 batch_size = 16
 mono_batch_size = 8
@@ -47,7 +47,7 @@ hidden_size_encoder = 256
 hidden_size_decoder = 512
 embed_size = 256
 has_output_layer = True
-dropout_layers = 0.4
+dropout_layers = 0.5
 dropout_lstm_states = 0.2
 context_size = 256
 # Search parameters
@@ -56,13 +56,14 @@ max_decoding_time_step = 100
 greedy_search = False
 # Vocab options
 freq_cutoff = 2
-vocab_size = 10000
+vocab_size = 50000
 vocab_mono = False
 max_len_corpus = 150
-merge_target_vocab = True
+merge_target_vocab = False
+merge_lr_and_helper_vocab = True
 # Display options
 valid_niter = 500
 log_every = 50
 
 # Low resource options
-mode = "normal"
+mode = "shared"
