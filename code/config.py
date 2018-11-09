@@ -58,7 +58,7 @@ greedy_search = False
 freq_cutoff = 2
 vocab_size = 50000
 vocab_mono = False
-max_len_corpus = 150
+max_len_corpus = 1000
 merge_target_vocab = False
 merge_lr_and_helper_vocab = True
 # Display options
