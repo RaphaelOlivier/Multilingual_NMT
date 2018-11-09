@@ -161,8 +161,8 @@ def batch_iter_ratio(data, batch_size, ratio, shuffle=False):
         num_helper = min(len(data['helper']), ratio*len(data['low']))
         lens = (len(data['low']), num_helper)
         batch_num = math.ceil(sum(lens) / batch_size)
-        helper_ind = np.random.choice(np.arange(len(data['helper'])), lens[1])
-        low_ind = np.arange(lens[1])
+        helper_ind = np.random.choice(np.arange(len(data['helper'])), lens[1], replace=False)
+        low_ind = np.arange(lens[0])
         np.random.shuffle(low_ind)
         inds = (low_ind, helper_ind)
         src_types = ['low'] + ['helper'] * ratio
