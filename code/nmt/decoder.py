@@ -61,14 +61,18 @@ class Decoder(nn.Module):
             return self.score_layer(h)
 
     def get_init_state(self, encoder_state):
-        init_state = encoder_state.new_full((self.nlayers, encoder_state.size(
-            0), self.hidden_size), 0), encoder_state.new_full((self.nlayers, encoder_state.size(0), self.hidden_size), 0)
-        init_state[0][0] = encoder_state
+        # init_state = encoder_state.new_full((self.nlayers, encoder_state.size(
+        #    0), self.hidden_size), 0), encoder_state.new_full((self.nlayers, encoder_state.size(0), self.hidden_size), 0)
+        init_state = encoder_state, encoder_state.new_full(
+            (self.nlayers, encoder_state.size(1), self.hidden_size), 0)
+        #init_state[0] = encoder_state
+        # print(init_state[0].size())
 
         return init_state
 
     def one_step_decoding(self, input, state, encoded, attention_mask=None, attend=True, replace=False):
         o = input
+        # print(state[0].size())
         h, new_state = self.lstm(o, (state[0], state[1]))
         o = self.dr(h)
         # attention
@@ -127,8 +131,7 @@ class Decoder(nn.Module):
         output_list = []
         prev_context_vector = self.init_context.expand((state[0][-1].size(0), -1))
         context_list = []
-        if config.residual:
-            self.lstm.sample_masks()
+        self.lstm.sample_masks()
         for i in range(len(padded_tgt_sequence)):
             input = torch.cat([padded_tgt_sequence[i], prev_context_vector], dim=1)
             output, new_context_vector, state = self.one_step_decoding(

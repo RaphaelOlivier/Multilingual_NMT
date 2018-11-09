@@ -167,7 +167,7 @@ if __name__ == '__main__':
               (lg, len(vocab.src), len(vocab.tgt)))
         all_vocabs[lg] = vocab
 
-    if config.mode == "shared":
+    if config.mode == "shared" or config.use_helper:
         for lg1, lg2 in [("az", "tr"), ("gl", "pt"), ("be", "ru")]:
             for word_helper in all_vocabs[lg2].src.word2id.keys():
                 all_vocabs[lg1].src.add(word_helper)

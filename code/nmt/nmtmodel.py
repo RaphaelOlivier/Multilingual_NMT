@@ -25,7 +25,7 @@ class NMTModel:
         self.encoder = Encoder(len(self.vocab.src(self.helper))+add_tokens_src, config.embed_size, config.hidden_size_encoder, num_layers=config.num_layers_encoder,
                                bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=None, state_projection=stproj)
         self.decoder = Decoder(len(self.vocab.tgt(self.helper)),
-                               context_projection=None)
+                               context_projection=config.hidden_size_decoder)
         self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.params = list(self.encoder.parameters())+list(self.decoder.parameters())
         self.optimizer = torch.optim.Adam(

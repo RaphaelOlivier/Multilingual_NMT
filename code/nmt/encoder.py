@@ -75,10 +75,12 @@ class Encoder(nn.Module):
 
     def get_decoder_init_state(self, state):
         if self.lstm.bidirectional:
-            last_state = state[0].view(self.lstm.num_layers, 2, state[0].size(1), -1)[-1]
-            last_state = torch.cat([last_state[0], last_state[1]], dim=1)
+            last_state = state[0].view(self.lstm.num_layers, 2,
+                                       state[0].size(1), -1).transpose(0, 1)
+            last_state = torch.cat([last_state[0], last_state[1]], dim=2)
         else:
             last_state = state[0]
+        #print(state[0].size(), last_state.size())
         if not self.use_state_projection:
             state = last_state
         else:

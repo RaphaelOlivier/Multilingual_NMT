@@ -8,9 +8,9 @@ import torch
 class SharedModel(NMTModel):
 
     def __init__(self, *args, **kwargs):
-        super(SharedModel, self).__init__(*args, helper=False, add_tokens_src=2, **kwargs)
-        self.vocab.src(False).add("__LOW__")
-        self.vocab.src(False).add("__HELPER__")
+        super(SharedModel, self).__init__(*args, helper=False, add_tokens_src=0, **kwargs)
+        # self.vocab.src(False).add("__LOW__")
+        # self.vocab.src(False).add("__HELPER__")
 
     def load(model_path: str):
 
@@ -26,24 +26,24 @@ class SharedModel(NMTModel):
 
     def __call__(self, src_sents, tgt_sents, key=None, **kwargs):
         if key == "low":
-            src_sents = [["__LOW__"] + s for s in src_sents]
+            src_sents2 = [["__LOW__"] + s for s in src_sents]
         else:
             assert key == "helper", "wrong key : "+str(key)
-            src_sents = [["__HELPER__"] + s for s in src_sents]
+            src_sents2 = [["__HELPER__"] + s for s in src_sents]
         return super(SharedModel, self).__call__(src_sents, tgt_sents, key=key, **kwargs)
 
     def encode_to_loss(self, src_sents, key=None, **kwargs):
         if key == "low":
-            src_sents = [["__LOW__"] + s for s in src_sents]
+            src_sents2 = [["__LOW__"] + s for s in src_sents]
         else:
             assert key == "helper", "wrong key : "+str(key)
-            src_sents = [["__HELPER__"] + s for s in src_sents]
+            src_sents2 = [["__HELPER__"] + s for s in src_sents]
         return super(SharedModel, self).encode_to_loss(src_sents, key=key, **kwargs)
 
     def beam_search(self, src_sent, key=None, **kwargs):
         if key == "low":
-            src_sent = ["__LOW__"] + src_sent
+            src_sent2 = ["__LOW__"] + src_sent
         else:
             assert key == "helper", "wrong key : "+str(key)
-            src_sent = ["__HELPER__"] + src_sent
+            src_sent2 = ["__HELPER__"] + src_sent
         return super(SharedModel, self).beam_search(src_sent, key=key, **kwargs)

@@ -22,6 +22,13 @@ def train(helper=False):
     train_data_src = read_corpus(paths.train_source, source='src')
     train_data_tgt = read_corpus(paths.train_target, source='tgt')
 
+    if config.use_helper:
+
+        train_data_src_helper = read_corpus(paths.train_source_helper, source='src')
+        train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt')
+        train_data_src = train_data_src + train_data_src_helper
+        train_data_tgt = train_data_tgt + train_data_tgt_helper
+
     dev_data_src = read_corpus(paths.dev_source, source='src')
     dev_data_tgt = read_corpus(paths.dev_target, source='tgt')
 
