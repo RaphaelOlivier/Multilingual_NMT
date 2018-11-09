@@ -103,13 +103,12 @@ def batch_iter(data, batch_size, shuffle=False):
 
         for j in range(batch_num):
             for i, k in enumerate(keys):
-                a = index_arrays[i]
                 if current_index[i] >= lens[i]:
                     current_index[i] = 0
                     if shuffle:
-                        np.random.shuffle(a)
+                        np.random.shuffle(index_arrays[i])
                 current_index[i] += batch_size
-                indices = a[current_index[i]-batch_size:current_index[i]]
+                indices = index_arrays[i][current_index[i]-batch_size:current_index[i]]
 
                 examples = [data[k][idx] for idx in indices]
 

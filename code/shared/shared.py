@@ -135,7 +135,8 @@ def decode():
     if config.sanity:
         max_step = 3
 
-    hypotheses = routine.beam_search(model, data_src, max_step, replace=config.replace)
+    hypotheses = routine.beam_search(
+        model, data_src, max_step=max_step, key="low", replace=config.replace)
 
     if config.target_in_decode:
         top_hypotheses = [hyps[0] for hyps in hypotheses]
