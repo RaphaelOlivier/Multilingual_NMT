@@ -52,7 +52,8 @@ def read_corpus(file_path, source='src'):
     for line in open(file_path):
         sent = line.strip().split(' ')
         # only append <s> and </s> to the target sentence
-        sent = ['<s>'] + sent + ['</s>']
+        if source == "tgt":
+            sent = ['<s>'] + sent + ['</s>']
         if len(sent) <= config.max_len_corpus or test:
             data.append(sent)
         else:

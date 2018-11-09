@@ -19,7 +19,7 @@ load = True
 pretraining = False
 pretraining_encoder = False
 replace = True
-seed = 2000
+seed = 1999
 test = True
 cuda = torch.cuda.is_available()
 target_in_decode = True
@@ -27,7 +27,7 @@ use_helper = False
 # flip_source = False  # keep at false
 use_helper = use_helper and language in {"az", "be", "gl"}
 # General training parameters
-lr = 0.0001
+lr = 0.001
 weight_decay = 0.00001
 batch_size = 16
 mono_batch_size = 8

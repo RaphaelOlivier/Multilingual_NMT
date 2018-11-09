@@ -28,8 +28,8 @@ def train():
     train_data_src_helper = read_corpus(paths.train_source_helper, source='src')
     train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt')
 
-    dev_data_src = read_corpus(paths.dev_source_helper, source='src')
-    dev_data_tgt = read_corpus(paths.dev_target_helper, source='tgt')
+    dev_data_src = read_corpus(paths.dev_source, source='src')
+    dev_data_tgt = read_corpus(paths.dev_target, source='tgt')
 
     train_data = zip_data(train_data_src, train_data_tgt, "low",
                           train_data_src_helper, train_data_tgt_helper, "helper")
@@ -49,6 +49,7 @@ def train():
     pretraining = config.pretraining
     pretraining_encoder = config.pretraining_encoder
     if config.load:
+        model = SharedModel.load(model_save_path)
         try:
             model = SharedModel.load(model_save_path)
             pretraining = False
@@ -110,7 +111,7 @@ def train():
     exit(0)
 
 
-def decode(helper=False):
+def decode():
     """
     performs decoding on a test set, and save the best-scoring decoding results.
     If the target gold-standard sentences are given, the function also computes
@@ -125,8 +126,8 @@ def decode(helper=False):
         data_tgt = read_corpus(paths.dev_target, source='tgt')
         data_tgt_path = paths.dev_target
 
-    print(f"load model from {paths.model(helper=helper)}", file=sys.stderr)
-    model = SharedModel.load(paths.model(helper=helper))
+    print(f"load model from {paths.model(helper=False)}.shared", file=sys.stderr)
+    model = SharedModel.load(paths.model(helper=False) + ".shared")
     if config.cuda:
         model.to_gpu()
     model.eval()
