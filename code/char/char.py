@@ -28,8 +28,8 @@ def train():
     train_data_src_helper = read_corpus(paths.train_source_helper, source='src', char=True)
     train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt', char=True)
 
-    dev_data_src = read_corpus(paths.dev_source, source='src', char=True)
-    dev_data_tgt = read_corpus(paths.dev_target, source='tgt', char=True)
+    # dev_data_src = read_corpus(paths.dev_source, source='src', char=True)
+    # dev_data_tgt = read_corpus(paths.dev_target, source='tgt', char=True)
 
     train_data = zip_data(train_data_src, train_data_tgt, "low",
                           train_data_src_helper, train_data_tgt_helper, "helper")
@@ -117,16 +117,16 @@ def decode():
     corpus-level BLEU score.
     """
     if config.test:
-        data_src = read_corpus(paths.test_source, source='src')
-        data_tgt = read_corpus(paths.test_target, source='tgt')
+        data_src = read_corpus(paths.test_source, source='src', char=True)
+        data_tgt = read_corpus(paths.test_target, source='tgt', char=True)
         data_tgt_path = paths.test_target
     else:
-        data_src = read_corpus(paths.dev_source, source='src')
-        data_tgt = read_corpus(paths.dev_target, source='tgt')
+        data_src = read_corpus(paths.dev_source, source='src', char=True)
+        data_tgt = read_corpus(paths.dev_target, source='tgt', char=True)
         data_tgt_path = paths.dev_target
 
-    print(f"load model from {paths.model(helper=False)}.shared", file=sys.stderr)
-    model = CharModel.load(paths.model(helper=False) + ".shared")
+    print(f"load model from {paths.model(helper=False)}.char", file=sys.stderr)
+    model = CharModel.load(paths.model(helper=False) + ".char")
     if config.cuda:
         model.to_gpu()
     model.eval()
@@ -145,7 +145,7 @@ def decode():
     with open(paths.decode_output, 'w') as f:
         for src_sent, hyps in zip(data_src, hypotheses):
             top_hyp = hyps[0]
-            hyp_sent = ' '.join(top_hyp.value)
+            hyp_sent = ''.join(top_hyp.value)
             f.write(hyp_sent + '\n')
 
     bleu_command = "perl scripts/multi-bleu.perl "+data_tgt_path+" < "+paths.decode_output
