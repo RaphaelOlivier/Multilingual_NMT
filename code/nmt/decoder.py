@@ -22,7 +22,6 @@ class Decoder(nn.Module):
             self.context_size = context_projection
 
         self.nlayers = config.num_layers_decoder
-        self.tie_embeddings = True
         self.dr = nn.Dropout(config.dropout_layers)
         self.final_layers_input = self.hidden_size
         self.input_lstm_size = config.embed_size
@@ -54,11 +53,8 @@ class Decoder(nn.Module):
         outs = torch.cat([decs, contexts], dim=1)
         h = outs
         if self.has_output_layer:
-            h = self.act(self.output_layer(h))
-        if self.tie_embeddings:
-            return self.dr(h).matmul(self.lookup.weight.t())
-        else:
-            return self.score_layer(h)
+            h = self.act(self.output_layer(self.dr(h)))
+        return h.matmul(self.lookup.weight.t())
 
     def get_init_state(self, encoder_state):
         # init_state = encoder_state.new_full((self.nlayers, encoder_state.size(
@@ -109,10 +105,9 @@ class Decoder(nn.Module):
         piled_embeddings = self.dr(self.lookup(piled_sequence))
         embed_sequences = [piled_embeddings[bounds[i]:bounds[i + 1]]
                            for i in range(len(tgt_sequences))]
-        # sorting target sequences
+
         padded_tgt_sequence = rnn.pad_sequence(embed_sequences)
 
-        # sorting encoder outputs
         if attend:
             padded_enc, lengths_enc = rnn.pad_packed_sequence(encoded)
             encoder_outputs = padded_enc.transpose(0, 1)

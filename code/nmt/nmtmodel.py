@@ -232,8 +232,6 @@ class NMTModel:
             torch.nn.init.uniform_(param, -0.1, 0.1)
 
     def load_params(self, model_path):
-        if model_path is None:
-            model_path = paths.model(helper=self.helper)
         enc_path = model_path + ".enc.pt"
         dec_path = model_path + ".dec.pt"
         opt_path = model_path + ".opt.pt"

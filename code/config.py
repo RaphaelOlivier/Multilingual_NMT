@@ -19,7 +19,7 @@ load = True
 pretraining = True
 pretraining_encoder = False
 replace = True
-seed = 1998
+seed = 1997
 test = True
 cuda = torch.cuda.is_available()
 target_in_decode = True
@@ -46,7 +46,7 @@ bidirectional_encoder = True
 residual = False
 hidden_size_encoder = 256
 hidden_size_decoder = 512
-embed_size = 128
+embed_size = 256
 has_output_layer = True
 dropout_layers = 0.5
 dropout_lstm_states = 0.
@@ -57,14 +57,13 @@ max_decoding_time_step = 100
 greedy_search = False
 # Vocab options
 freq_cutoff = 2
-vocab_size = 30000
+vocab_size = 50000
 vocab_mono = False
 max_len_corpus = 1000
 merge_target_vocab = False
-merge_lr_and_helper_vocab = True
 # Display options
 valid_niter = 500
 log_every = 50
 
 # Low resource options
-mode = "shared"
+mode = "normal"
