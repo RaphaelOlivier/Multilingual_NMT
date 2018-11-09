@@ -102,7 +102,7 @@ class MultipleLSTMCells(nn.Module):
             if self.residual and self.where_residual[i]:
                 h = residual + h
             new_state[0][i] = self.dropouts[i](h)
-            new_state[0][i] = c
+            new_state[1][i] = c
             h = self.dr(h)
 
         return h, new_state
