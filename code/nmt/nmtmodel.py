@@ -209,17 +209,19 @@ class NMTModel:
 
         return ppl
 
-    def step(self, loss, freeze_dec_embeddings=False, **kwargs):
+    def step(self, loss, freeze_dec_embeddings=True, **kwargs):
 
-        if freeze_dec_embeddings:
+        if freeze_dec_embeddings and (config.encoder_embeddings or config.decoder_embeddings):
             dec_embeddings = self.decoder.lookup.weight.detach()
 
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-        if freeze_dec_embeddings:
-            self.decoder.lookup.weight[4:] = dec_embeddings[4:]
+        if freeze_dec_embeddings and (config.encoder_embeddings or config.decoder_embeddings):
+            new_tensor = self.decoder.lookup.weight.detach()
+            new_tensor[4:] = dec_embeddings[4:]
+            self.decoder.lookup.weight[4:] = new_tensor
 
 
 
