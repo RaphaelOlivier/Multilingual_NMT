@@ -16,7 +16,7 @@ all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 # General information
 printout = True
 sanity = False
-load = True
+load = False
 pretraining = False
 pretraining_encoder = False
 replace = True
@@ -29,17 +29,17 @@ target_in_decode = True
 use_helper = True
 # flip_source = False  # keep at false
 use_helper = use_helper and language in {"az", "be", "gl"}
-start_ratio = -1
+start_ratio = 10
 end_ratio = 3
 
 # General training parameters
-lr = 0.001
+lr = 0.0001
 weight_decay = 0.00001
-batch_size = 16
+batch_size = 128
 mono_batch_size = 8
 # clip_grad = 5.0
 lr_decay = 0.2
-max_epoch = 200
+max_epoch = 10
 max_epoch_pretraining = 1
 max_epoch_pretraining_encoder = 1
 patience = 3

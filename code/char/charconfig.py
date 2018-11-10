@@ -6,7 +6,7 @@ use_helper = use_helper and language in {"az", "be", "gl"}
 
 # sampling ratios for HRL : LRL
 # -1 indicates using all of HRL
-start_ratio = -1
+start_ratio = 10
 end_ratio = 3
 
 pretraining = False

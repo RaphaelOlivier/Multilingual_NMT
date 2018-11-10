@@ -60,7 +60,6 @@ def train_model(model, train_data, dev_data, model_save_path, train_batch_size=N
         helper_ratio = 0
 
     if config.use_helper:
-        helper_min = config.end_ratio * len(train_data['low'])
         helper_decrement = max(
             (helper_ratio - config.end_ratio) / max_epoch,
             0
@@ -72,7 +71,7 @@ def train_model(model, train_data, dev_data, model_save_path, train_batch_size=N
         model.train()
 
         if config.use_helper:
-            helper_ratio = max(helper_min, helper_ratio - helper_decrement)
+            helper_ratio = max(config.end_ratio, helper_ratio - helper_decrement)
 
         # TODO: Generalize this batch iter ratio
         for src_sents, tgt_sents, key in batch_iter_ratio(train_data, batch_size=train_batch_size,

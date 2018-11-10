@@ -177,6 +177,7 @@ def batch_iter_ratio(data, batch_size, ratio, shuffle=False):
                 key = idxs[src]
                 if src_idx[key] >= lens[key]:
                     key = not key
+                    src = 'helper' if src == 'low' else 'low'
                 examples.append(data[src][inds[key][src_idx[key]]])
                 src_idx[key] += 1
                 total += 1
