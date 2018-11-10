@@ -1,5 +1,4 @@
 #!/bin/sh
-python code/vocab.py \
 python code/run.py \
     train \
 

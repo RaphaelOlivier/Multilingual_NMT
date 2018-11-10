@@ -15,7 +15,7 @@ all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 # General information
 printout = True
 sanity = False
-load = True
+load = False
 pretraining = True
 pretraining_encoder = False
 encoder_embeddings = False
@@ -68,4 +68,4 @@ valid_niter = 500
 log_every = 50
 
 # Low resource options
-mode = "shared"
+mode = "multi"
