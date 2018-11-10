@@ -54,7 +54,7 @@ class Decoder(nn.Module):
         h = outs
         if self.has_output_layer:
             h = self.act(self.output_layer(self.dr(h)))
-        return self.score_layer(h)
+        return h.matmul(self.lookup.weight.t())
 
     def get_init_state(self, encoder_state):
         # init_state = encoder_state.new_full((self.nlayers, encoder_state.size(
