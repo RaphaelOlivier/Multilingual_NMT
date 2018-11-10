@@ -34,8 +34,8 @@ Modular set of models for multilingual translationapplied to low-resource langua
 
 ### Before running
 To use that code, you should have an additional `data` folder in the root, with :
-    * the WMT 2015 data files for Azeri, Belarussian, Galician, Turkish, Russian and Portuguese, in `data/bilingual`
-    * (unused) wikipedia data for Azeri, Belarussian, Galician in `data/monolingual`
+    * the WMT 2015 data files for Azeri, Belarusian, Galician, Turkish, Russian and Portuguese, in `data/bilingual`
+    * (unused) wikipedia data for Azeri, Belarusian, Galician in `data/monolingual`
     * initially empty `data/vocab` and `data/subwords` folders.
 
 ### Run the code
