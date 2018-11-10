@@ -148,6 +148,11 @@ if __name__ == '__main__':
         all_corpuses[lg].append(tgt_sents)
         all_corpuses[lg].append(mono_sents)
 
+    if config.mode != "char" and (config.mode == "shared" or config.use_helper):
+        for lg1, lg2 in [("az", "tr"), ("gl", "pt"), ("be", "ru")]:
+            all_corpuses[lg1][0] = all_corpuses[lg1][0] + all_corpuses[lg2][0]
+            all_corpuses[lg1][1] = all_corpuses[lg1][1] + all_corpuses[lg2][1]
+
     if config.merge_target_vocab:
         all_tgt_sents = []
         for lg in ["az", "be", "gl", "pt", "tr", "ru"]:
@@ -167,7 +172,7 @@ if __name__ == '__main__':
               (lg, len(vocab.src), len(vocab.tgt)))
         all_vocabs[lg] = vocab
 
-    if config.mode == "shared" or "char":
+    if config.mode == "char":
         for lg1, lg2 in [("az", "tr"), ("gl", "pt"), ("be", "ru")]:
             for word_helper in all_vocabs[lg2].src.word2id.keys():
                 all_vocabs[lg1].src.add(word_helper)

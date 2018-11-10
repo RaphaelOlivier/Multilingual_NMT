@@ -22,7 +22,6 @@ class Decoder(nn.Module):
             self.context_size = context_projection
 
         self.nlayers = config.num_layers_decoder
-        self.tie_embeddings = True
         self.dr = nn.Dropout(config.dropout_layers)
         self.final_layers_input = self.hidden_size
         self.input_lstm_size = config.embed_size
@@ -54,23 +53,22 @@ class Decoder(nn.Module):
         outs = torch.cat([decs, contexts], dim=1)
         h = outs
         if self.has_output_layer:
-            h = self.act(self.output_layer(h))
-        if self.tie_embeddings:
-            return self.dr(h).matmul(self.lookup.weight.t())
-        else:
-            return self.score_layer(h)
+            h = self.act(self.output_layer(self.dr(h)))
+        return self.score_layer(h)
 
     def get_init_state(self, encoder_state):
-        init_state = encoder_state.new_full((self.nlayers, encoder_state.size(
-            0), self.hidden_size), 0), encoder_state.new_full((self.nlayers, encoder_state.size(0), self.hidden_size), 0)
-        init_state[0][0] = encoder_state
+        # init_state = encoder_state.new_full((self.nlayers, encoder_state.size(
+        #     0), self.hidden_size), 0), encoder_state.new_full((self.nlayers, encoder_state.size(0), self.hidden_size), 0)
+        init_state = encoder_state, encoder_state.new_full(
+            (self.nlayers, encoder_state.size(1), self.hidden_size), 0)
+        # init_state[0] = encoder_state
 
         return init_state
 
     def one_step_decoding(self, input, state, encoded, attention_mask=None, attend=True, replace=False):
         o = input
-        h, new_state = self.lstm(o, (state[0], state[1]))
-        o = self.dr(h)
+        h, new_state = self.lstm(o, state)
+        o = h
         # attention
         context = None
         if attend:
@@ -127,8 +125,7 @@ class Decoder(nn.Module):
         output_list = []
         prev_context_vector = self.init_context.expand((state[0][-1].size(0), -1))
         context_list = []
-        if config.residual:
-            self.lstm.sample_masks()
+        self.lstm.sample_masks()
         for i in range(len(padded_tgt_sequence)):
             input = torch.cat([padded_tgt_sequence[i], prev_context_vector], dim=1)
             output, new_context_vector, state = self.one_step_decoding(
@@ -156,7 +153,6 @@ class Decoder(nn.Module):
         return loss
 
     def greedy_search(self, encoded_sequence, init_state, max_step=None, replace=False):
-        self.eval()
         if max_step is None:
             max_step = config.max_decoding_time_step
         tgt_ids = []
@@ -205,7 +201,6 @@ class Decoder(nn.Module):
         return torch.cat(tgt_ids), score
 
     def beam_search(self, encoded_sequence, init_state, beam_size, max_step=None, replace=False):
-
         if max_step is None:
             max_step = config.max_decoding_time_step
         if beam_size is None:
@@ -241,7 +236,7 @@ class Decoder(nn.Module):
                 current_state = hypothesis[1]
                 current_score = hypothesis[3]
 
-                embed = self.lookup(current_word)
+                embed = self.dr(self.lookup(current_word))
                 input = torch.cat([embed, hypothesis[2]], dim=1)
 
                 if replace:
@@ -252,7 +247,6 @@ class Decoder(nn.Module):
                         input, current_state, encoder_outputs, replace=replace)
 
                 scores = self.get_word_scores(dec, new_context_vector)
-
                 probs = -nn.LogSoftmax(dim=1)(scores).squeeze()
                 probs = probs.detach().cpu().numpy()
                 max_indices = np.argpartition(probs, beam_size - 1)[:beam_size]

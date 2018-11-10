@@ -15,7 +15,7 @@ all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 
 # General information
 printout = True
-sanity = False
+sanity = True
 load = False
 pretraining = False
 pretraining_encoder = False
@@ -39,7 +39,7 @@ batch_size = 128
 mono_batch_size = 8
 # clip_grad = 5.0
 lr_decay = 0.2
-max_epoch = 10
+max_epoch = 2
 max_epoch_pretraining = 1
 max_epoch_pretraining_encoder = 1
 patience = 3
@@ -49,13 +49,13 @@ max_num_trial = 3
 num_layers_encoder = 2
 num_layers_decoder = 2
 bidirectional_encoder = True
-residual = True
+residual = False
 hidden_size_encoder = 256
 hidden_size_decoder = 512
 embed_size = 256
 has_output_layer = True
 dropout_layers = 0.5
-dropout_lstm_states = 0.2
+dropout_lstm_states = 0.
 context_size = 256
 
 # Search parameters

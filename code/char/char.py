@@ -28,9 +28,6 @@ def train():
     train_data_src_helper = read_corpus(paths.train_source_helper, source='src', char=True)
     train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt', char=True)
 
-    # dev_data_src = read_corpus(paths.dev_source, source='src', char=True)
-    # dev_data_tgt = read_corpus(paths.dev_target, source='tgt', char=True)
-
     train_data = zip_data(train_data_src, train_data_tgt, "low",
                           train_data_src_helper, train_data_tgt_helper, "helper")
     dev_data = zip_data(dev_data_src, dev_data_tgt, "low")
