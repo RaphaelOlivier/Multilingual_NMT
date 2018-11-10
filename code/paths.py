@@ -55,17 +55,17 @@ test_target_helper = get_data_path("test", "tg", helper=True)
 data_monolingual = "data/monolingual/"+config.language+".wiki.txt"
 
 def get_fasttext_path(lg='en'):
-    return "data/monolingual/wikivecs/wiki." + lg + ".vec"
+    return "data/wikivecs/wiki." + lg + ".vec"
 
 def get_dec_vec():
-    return "data/monolingual/wikivecs/en_embeddings.npy"
+    return "data/wikivecs/en_embeddings.npy"
 
 def get_enc_vec():
     if config.mode == "normal":
-        return "data/monolingual/wikivecs/{}_embeddings.npy".format(config.language)
+        return "data/wikivecs/{}_embeddings.npy".format(config.language)
     if config.mode == "multi":
-        return "data/monolingual/wikivecs/{}_embeddings.npy".format(config.language), \
-               "data/monolingual/wikivecs/{}_embeddings.npy".format(config.helper_language)
+        return "data/wikivecs/{}_embeddings.npy".format(config.language), \
+               "data/wikivecs/{}_embeddings.npy".format(config.helper_language)
     if config.mode == "shared":
         raise NotImplementedError
     if config.mode == "transfer":
