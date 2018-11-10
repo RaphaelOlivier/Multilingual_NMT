@@ -54,6 +54,7 @@ class Encoder(nn.Module):
             scores = F.linear(out, self.lookup.weight)
             tgt = torch.cat([s[1:] for s in sequences])
             return self.criterion(scores, tgt)
+
         if not self.use_context_projection:
             context_pad = encoded_pad
         else:

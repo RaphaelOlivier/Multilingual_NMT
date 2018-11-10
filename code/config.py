@@ -1,6 +1,6 @@
 import torch
 
-language = "az"
+language = "be"
 
 # Helper language parameters
 if language == "az":
@@ -19,11 +19,11 @@ load = True
 pretraining = True
 pretraining_encoder = False
 replace = True
-seed = 1997
+seed = 1996
 test = True
 cuda = torch.cuda.is_available()
 target_in_decode = True
-use_helper = True
+use_helper = False
 # flip_source = False  # keep at false
 use_helper = use_helper and language in {"az", "be", "gl"}
 # General training parameters

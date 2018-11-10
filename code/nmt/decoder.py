@@ -69,8 +69,8 @@ class Decoder(nn.Module):
     def one_step_decoding(self, input, state, encoded, attention_mask=None, attend=True, replace=False):
         o = input
         # print(state[0].size())
-        h, new_state = self.lstm(o, (state[0], state[1]))
-        o = self.dr(h)
+        h, new_state = self.lstm(o, state)
+        o = h
         # attention
         context = None
         if attend:
@@ -154,7 +154,6 @@ class Decoder(nn.Module):
         return loss
 
     def greedy_search(self, encoded_sequence, init_state, max_step=None, replace=False):
-        self.eval()
         if max_step is None:
             max_step = config.max_decoding_time_step
         tgt_ids = []
@@ -203,7 +202,6 @@ class Decoder(nn.Module):
         return torch.cat(tgt_ids), score
 
     def beam_search(self, encoded_sequence, init_state, beam_size, max_step=None, replace=False):
-
         if max_step is None:
             max_step = config.max_decoding_time_step
         if beam_size is None:
@@ -239,7 +237,7 @@ class Decoder(nn.Module):
                 current_state = hypothesis[1]
                 current_score = hypothesis[3]
 
-                embed = self.lookup(current_word)
+                embed = self.dr(self.lookup(current_word))
                 input = torch.cat([embed, hypothesis[2]], dim=1)
 
                 if replace:
@@ -250,7 +248,6 @@ class Decoder(nn.Module):
                         input, current_state, encoder_outputs, replace=replace)
 
                 scores = self.get_word_scores(dec, new_context_vector)
-
                 probs = -nn.LogSoftmax(dim=1)(scores).squeeze()
                 probs = probs.detach().cpu().numpy()
                 max_indices = np.argpartition(probs, beam_size - 1)[:beam_size]

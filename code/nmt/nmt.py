@@ -116,6 +116,7 @@ def decode(helper=False):
     If the target gold-standard sentences are given, the function also computes
     corpus-level BLEU score.
     """
+
     if config.test:
         data_src = read_corpus(paths.test_source, source='src')
         data_tgt = read_corpus(paths.test_target, source='tgt')

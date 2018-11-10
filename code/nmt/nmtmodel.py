@@ -36,8 +36,9 @@ class NMTModel:
             self.encoder.parameters(), lr=config.lr, weight_decay=config.weight_decay)
         self.gpu = False
         self.initialize()
-
+        print(len(self.vocab.src(False)))
         # initialize neural network layers...
+
     def update_lr(self, lr, encoder=False, decoder=False, **kwargs):
         if encoder:
             opt = self.encoder_optimizer
@@ -143,6 +144,7 @@ class NMTModel:
         if self.gpu:
             tensor_sent = tensor_sent.cuda()
         src_encoding, decoder_init_state = self.encoder.encode_one_sent(tensor_sent)
+        #print(src_sent, np_sent, src_encoding.size())
         if config.greedy_search:
             tgt_tensor, score = self.decoder.greedy_search(
                 src_encoding, decoder_init_state, max_step, replace=replace)
