@@ -229,7 +229,7 @@ class MultiWayModel(NMTModel):
 
     def step(self, loss_mt, loss_disc=None, key=None):
         # Update once every two steps to alternate languages in batches
-        if loss_disc is not None:
+        if loss_disc is None:
             self.optimizer.zero_grad()
             loss_mt.backward()
             nn.utils.clip_grad_norm(self.params, config.clip_grad)
