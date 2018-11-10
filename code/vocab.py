@@ -136,7 +136,7 @@ if __name__ == '__main__':
         print('read in source sentences: %s' % sc)
         print('read in target sentences: %s' % tg)
 
-        src_sents = read_corpus(sc, source='src')
+        src_sents = read_corpus(sc, source='src', lg=lg)
         tgt_sents = read_corpus(tg, source='tgt')
         mono_sents = None
         if config.vocab_mono and lg in ["az", "be", "gl"]:

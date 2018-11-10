@@ -26,3 +26,5 @@ lr_decay = 0.2
 max_num_trial = 3
 patience = 3
 clip_grad = 5
+
+sampling = 4

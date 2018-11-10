@@ -2,15 +2,18 @@ import torch
 
 language = "gl"
 
-# Helper language parameters
-if language == "az":
-    helper_language = "tr"
-elif language == "be":
-    helper_language = "ru"
-elif language == "gl":
-    helper_language = "pt"
-else:
-    helper_language = "None"
+
+def get_helper_language(lg):
+    if lg == "az":
+        return "tr"
+    elif lg == "be":
+        return "ru"
+    elif lg == "gl":
+        return "pt"
+
+
+helper_language = get_helper_language(language)
+
 all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 # General information
 printout = True
@@ -63,9 +66,13 @@ vocab_size = 50000
 vocab_mono = False
 max_len_corpus = 1000
 merge_target_vocab = False
+subwords = True
+subwords_on_monolingual = False
+subwords_model_type = "unigram"
+subwords_vocab_size = {"az": 8000, "be": 8000, "gl":8000}
 # Display options
 valid_niter = 500
 log_every = 50
 
 # Low resource options
-mode = "multi"
+mode = "shared"
