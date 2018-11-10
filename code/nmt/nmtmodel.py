@@ -221,7 +221,7 @@ class NMTModel:
         if freeze_dec_embeddings and (config.encoder_embeddings or config.decoder_embeddings):
             new_tensor = self.decoder.lookup.weight.detach()
             new_tensor[4:] = dec_embeddings[4:]
-            self.decoder.lookup.weight[4:] = new_tensor
+            self.decoder.lookup.weight = new_tensor
 
 
 
