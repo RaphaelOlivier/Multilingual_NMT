@@ -48,16 +48,20 @@ def train(helper=False):
         max_epoch = 2
     pretraining = config.pretraining
     pretraining_encoder = config.pretraining_encoder
+    loaded_model = False
     if config.load:
         try:
             model = NMTModel.load(model_save_path)
             pretraining = False
             pretraining_encoder = False
+            loaded_model = True
         except:
             print("Impossible to load the model ; creating a new one.")
-            model = NMTModel(helper=False)
-    else:
+    if not loaded_model:
         model = NMTModel()
+    # if config.pretrained_embeddings and config.mode == "normal":
+    #     encoder_embeddings =
+    #     model.initialize_embeddings(encoder_embeddings, decoder_embeddings)
 
     if config.cuda:
         model.to_gpu()

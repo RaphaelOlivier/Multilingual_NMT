@@ -53,3 +53,6 @@ test_source_helper = get_data_path("test", "sc", helper=True)
 test_target_helper = get_data_path("test", "tg", helper=True)
 
 data_monolingual = "data/monolingual/"+config.language+".wiki.txt"
+
+def get_fasttext_path(lg='en'):
+    return "data/monolingual/wikivecs/wiki." + lg + ".vec"

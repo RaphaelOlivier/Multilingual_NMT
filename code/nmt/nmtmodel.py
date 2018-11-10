@@ -22,6 +22,7 @@ class NMTModel:
         self.vocab = pickle.load(open(paths.vocab, 'rb'))
         stproj = None if (config.hidden_size_encoder * (2 if config.bidirectional_encoder else 1)
                           == config.hidden_size_decoder) else config.hidden_size_decoder
+        print(len(self.vocab.src(self.helper)))
         self.encoder = Encoder(len(self.vocab.src(self.helper))+add_tokens_src, config.embed_size, config.hidden_size_encoder, num_layers=config.num_layers_encoder,
                                bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=None, state_projection=stproj)
         self.decoder = Decoder(len(self.vocab.tgt(self.helper)),
@@ -228,10 +229,18 @@ class NMTModel:
 
     def initialize(self):
 
-        for param in self.encoder.parameters():
+        for name, param in self.encoder.named_parameters():
             torch.nn.init.uniform_(param, -0.1, 0.1)
-        for param in self.decoder.parameters():
+        for name, param  in self.decoder.named_parameters():
             torch.nn.init.uniform_(param, -0.1, 0.1)
+
+    def initialize_embeddings(self, encoder_embeddings, decoder_embeddings, freeze=True):
+
+        self.encoder.lookup.weight.data.copy_(torch.from_numpy(encoder_embeddings))
+        self.decoder.lookup.weight.data.copy_(torch.from_numpy(decoder_embeddings))
+        if freeze:
+            self.encoder.lookup.weight.requires_grad = False
+            self.decoder.lookup.weight.requires_grad = False
 
     def load_params(self, model_path):
         enc_path = model_path + ".enc.pt"
