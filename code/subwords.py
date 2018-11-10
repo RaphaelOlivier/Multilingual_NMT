@@ -22,7 +22,7 @@ def train(lg, helper):
         suffix += ".with_mono"
     model_prefix = target_folder+model_type+"."+lg+suffix
     if config.subwords_on_monolingual:
-        lr_path = get_mono_path(lg)
+        lr_path = paths.get_train_and_mono_path(lg)
     else:
         lr_path = paths.get_data_path(set="train", mode="sc", lg=lg, subwords=False, helper=False)
     if not helper:
