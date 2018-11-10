@@ -209,10 +209,19 @@ class NMTModel:
 
         return ppl
 
-    def step(self, loss, **kwargs):
+    def step(self, loss, freeze_dec_embeddings=True, **kwargs):
+
+        if freeze_dec_embeddings:
+            dec_embeddings = self.decoder.lookup.weight.detach()
+
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
+
+        if freeze_dec_embeddings:
+            self.decoder.lookup.weight[4:] = dec_embeddings[4:]
+
+
 
     @staticmethod
     def load(model_path: str):
@@ -234,13 +243,13 @@ class NMTModel:
         for name, param  in self.decoder.named_parameters():
             torch.nn.init.uniform_(param, -0.1, 0.1)
 
-    def initialize_enc_embeddings(self, encoder_embeddings, freeze=True):
+    def initialize_enc_embeddings(self, encoder_embeddings, freeze=False):
 
         self.encoder.lookup.weight.data.copy_(torch.from_numpy(encoder_embeddings))
         if freeze:
             self.encoder.lookup.weight.requires_grad = False
 
-    def initialize_dec_embeddings(self, decoder_embeddings, freeze=True):
+    def initialize_dec_embeddings(self, decoder_embeddings, freeze=False):
 
         self.decoder.lookup.weight.data.copy_(torch.from_numpy(decoder_embeddings))
         if freeze:
