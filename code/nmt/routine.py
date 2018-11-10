@@ -39,7 +39,7 @@ def compute_corpus_level_bleu_score(references: List[List[str]], hypotheses: Lis
     return bleu_score
 
 
-def train_model(model, train_data, dev_data, model_save_path, train_batch_size=None, valid_niter=None, log_every=None, max_epoch=None, lr=None, max_patience=None, max_num_trial=None, lr_decay=None):
+def train_model(model, train_data, dev_data, model_save_path, train_batch_size=None, valid_niter=None, log_every=None, max_epoch=None, lr=None, max_patience=None, max_num_trial=None, lr_decay=None,  sampling_multi=1):
     print_file = sys.stderr
     if config.printout:
         print_file = sys.stdout
@@ -54,7 +54,7 @@ def train_model(model, train_data, dev_data, model_save_path, train_batch_size=N
     while True:
         epoch += 1
         model.train()
-        for src_sents, tgt_sents, key in batch_iter(train_data, batch_size=train_batch_size, shuffle=True):
+        for src_sents, tgt_sents, key in batch_iter(train_data, batch_size=train_batch_size, shuffle=True, sampling_multi=sampling_multi):
             train_iter += 1
             batch_size = len(src_sents)
 
@@ -159,7 +159,7 @@ def train_model(model, train_data, dev_data, model_save_path, train_batch_size=N
             return model
 
 
-def train_decoder(model, train_data, dev_data, model_save_path, train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay):
+def train_decoder(model, train_data, dev_data, model_save_path, train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay, sampling_multi=1):
     print_file = sys.stderr
     if config.printout:
         print_file = sys.stdout
@@ -173,7 +173,7 @@ def train_decoder(model, train_data, dev_data, model_save_path, train_batch_size
     while True:
         epoch += 1
         model.train()
-        for src_sents, tgt_sents, key in batch_iter(train_data, batch_size=train_batch_size, shuffle=True):
+        for src_sents, tgt_sents, key in batch_iter(train_data, batch_size=train_batch_size, shuffle=True, sampling_multi=sampling_multi):
             train_iter += 1
             batch_size = len(src_sents)
 
@@ -276,7 +276,7 @@ def train_decoder(model, train_data, dev_data, model_save_path, train_batch_size
             return
 
 
-def train_encoder(model, train_data, dev_data, model_save_path, train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay):
+def train_encoder(model, train_data, dev_data, model_save_path, train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay, sampling_multi=1):
     print_file = sys.stderr
     if config.printout:
         print_file = sys.stdout
@@ -290,7 +290,7 @@ def train_encoder(model, train_data, dev_data, model_save_path, train_batch_size
     while True:
         epoch += 1
         model.train()
-        for src_sents, tgt_sents, key in batch_iter(train_data, batch_size=train_batch_size, shuffle=True):
+        for src_sents, tgt_sents, key in batch_iter(train_data, batch_size=train_batch_size, shuffle=True, sampling_multi=sampling_multi):
             train_iter += 1
             batch_size = len(src_sents)
 

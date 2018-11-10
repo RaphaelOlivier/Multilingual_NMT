@@ -1,16 +1,19 @@
 import torch
 
-language = "be"
+language = "gl"
 
-# Helper language parameters
-if language == "az":
-    helper_language = "tr"
-elif language == "be":
-    helper_language = "ru"
-elif language == "gl":
-    helper_language = "pt"
-else:
-    helper_language = "None"
+
+def get_helper_language(lg):
+    if lg == "az":
+        return "tr"
+    elif lg == "be":
+        return "ru"
+    elif lg == "gl":
+        return "pt"
+
+
+helper_language = get_helper_language(language)
+
 all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 # General information
 printout = True
@@ -23,7 +26,7 @@ seed = 1996
 test = True
 cuda = torch.cuda.is_available()
 target_in_decode = True
-use_helper = False
+use_helper = True
 # flip_source = False  # keep at false
 use_helper = use_helper and language in {"az", "be", "gl"}
 # General training parameters
@@ -40,8 +43,8 @@ max_epoch_pretraining_encoder = 1
 patience = 3
 max_num_trial = 3
 # Network parameters
-num_layers_encoder = 2
-num_layers_decoder = 2
+num_layers_encoder = 3
+num_layers_decoder = 3
 bidirectional_encoder = True
 residual = False
 hidden_size_encoder = 256
@@ -61,6 +64,10 @@ vocab_size = 50000
 vocab_mono = False
 max_len_corpus = 1000
 merge_target_vocab = False
+subwords = False
+subwords_model_type = "unigram"
+subwords_vocab_size = {"az": 10000 if use_helper else 3000,
+                       "be": 10000 if use_helper else 3000, "gl": 10000 if use_helper else 4000}
 # Display options
 valid_niter = 500
 log_every = 50

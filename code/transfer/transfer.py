@@ -7,7 +7,7 @@ import torch
 from typing import List
 from docopt import docopt
 
-from utils import read_corpus
+from utils import read_corpus, write_sents
 from vocab import Vocab, VocabEntry, MultipleVocab
 from nmt import routine
 import paths
@@ -160,11 +160,11 @@ def decode(decode_helper=False):
         #bleu_score = routine.compute_corpus_level_bleu_score(data_tgt, top_hypotheses)
         #print(f'Corpus BLEU: {bleu_score}', file=sys.stderr)
 
-    with open(paths.decode_output, 'w') as f:
-        for src_sent, hyps in zip(data_src, hypotheses):
-            top_hyp = hyps[0]
-            hyp_sent = ' '.join(top_hyp.value)
-            f.write(hyp_sent + '\n')
+    lines = []
+    for src_sent, hyps in zip(data_src, hypotheses):
+        top_hyp = hyps[0]
+        lines.append(top_hyp.value)
+    write_sents(lines, paths.decode_output)
 
     bleu_command = "perl scripts/multi-bleu.perl "+data_tgt_path+" < "+paths.decode_output
     os.system(bleu_command)
