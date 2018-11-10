@@ -23,7 +23,6 @@ class SharedModel(NMTModel):
         dec_path = model_path + ".dec.pt"
         model = SharedModel()
         print("Loading encoder")
-        dict = torch.load(enc_path)
         load_partial_state_dict(model.encoder, torch.load(enc_path))
         print("Loading decoder")
         load_partial_state_dict(model.decoder, torch.load(dec_path))

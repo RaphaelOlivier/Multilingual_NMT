@@ -245,13 +245,17 @@ class NMTModel:
 
     def initialize_enc_embeddings(self, encoder_embeddings, freeze=False):
 
+        print(self.encoder.lookup.weight.data.shape)
         self.encoder.lookup.weight.data.copy_(torch.from_numpy(encoder_embeddings))
+        print(self.encoder.lookup.weight.data.shape)
         if freeze:
             self.encoder.lookup.weight.requires_grad = False
 
     def initialize_dec_embeddings(self, decoder_embeddings, freeze=False):
 
+        print(self.encoder.lookup.weight.data.shape)
         self.decoder.lookup.weight.data.copy_(torch.from_numpy(decoder_embeddings))
+        print(self.encoder.lookup.weight.data.shape)
         if freeze:
             self.decoder.lookup.weight.requires_grad = False
 

@@ -126,6 +126,8 @@ def train_model(model, train_data, dev_data, model_save_path, train_batch_size=N
                 elif patience < max_patience:
                     patience += 1
                     print('hit patience %d' % patience, file=print_file)
+                    if sampling_multi > 0:
+                        sampling_multi -= 1
 
                     if patience == max_patience:
                         num_trial += 1
