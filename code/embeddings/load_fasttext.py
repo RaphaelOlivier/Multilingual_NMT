@@ -20,7 +20,7 @@ def create_language_fasttext(language, language_vocab):
             unknown_embedding += np.array(list(map(float, tokens[1:])))
             unknowns += 1
     embeddings[3] = unknown_embedding / unknowns
-    np.save("data/monolingual/wikivecs/{}_embeddings.npy".format(language), embeddings)
+    np.save("data/wikivecs/{}_embeddings.npy".format(language), embeddings)
 
 
 def create_all_embeddings(vocab):

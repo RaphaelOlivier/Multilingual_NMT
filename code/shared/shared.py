@@ -47,16 +47,43 @@ def train():
         max_epoch = 2
     pretraining = config.pretraining
     pretraining_encoder = config.pretraining_encoder
+
+    loaded_model = False
     if config.load:
         try:
             model = SharedModel.load(model_save_path)
             pretraining = False
             pretraining_encoder = False
+            loaded_model = True
         except:
             print("Impossible to load the model ; creating a new one.")
-            model = SharedModel()
-    else:
+    if not loaded_model:
         model = SharedModel()
+        if config.encoder_embeddings:
+            if config.mode == "normal":
+                print("loading encoder embeddings")
+                encoder_embeddings = np.load(paths.get_enc_vec())
+                model.initialize_enc_embeddings(encoder_embeddings)
+            if config.mode == "multi":
+                print("loading encoder embeddings")
+                lrl_embedding_path, hrl_embedding_path = paths.get_enc_vec()
+                lrl_embedding, hrl_embedding = np.load(lrl_embedding_path), np.load(hrl_embedding_path)
+                model.initialize_enc_embeddings((lrl_embedding, hrl_embedding))
+        if config.decoder_embeddings:
+            print("loading decoder embeddings")
+            decoder_embeddings = np.load(paths.get_dec_vec())
+            model.initialize_dec_embeddings(decoder_embeddings)
+
+    # if config.load:
+    #     try:
+    #         model = SharedModel.load(model_save_path)
+    #         pretraining = False
+    #         pretraining_encoder = False
+    #     except:
+    #         print("Impossible to load the model ; creating a new one.")
+    #         model = SharedModel()
+    # else:
+    #     model = SharedModel()
 
     if config.cuda:
         model.to_gpu()

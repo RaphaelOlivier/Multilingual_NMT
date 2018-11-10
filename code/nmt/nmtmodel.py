@@ -209,7 +209,7 @@ class NMTModel:
 
         return ppl
 
-    def step(self, loss, freeze_dec_embeddings=True, **kwargs):
+    def step(self, loss, freeze_dec_embeddings=False, **kwargs):
 
         if freeze_dec_embeddings:
             dec_embeddings = self.decoder.lookup.weight.detach()
