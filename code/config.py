@@ -15,11 +15,11 @@ all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 
 # General information
 printout = True
-sanity = True
+sanity = False
 load = False
 pretraining = False
 pretraining_encoder = False
-replace = True
+replace = False
 seed = 1999
 test = True
 cuda = torch.cuda.is_available()
@@ -29,17 +29,17 @@ target_in_decode = True
 use_helper = True
 # flip_source = False  # keep at false
 use_helper = use_helper and language in {"az", "be", "gl"}
-start_ratio = 10
-end_ratio = 3
+start_ratio = 20
+end_ratio = 5
 
 # General training parameters
 lr = 0.0001
 weight_decay = 0.00001
-batch_size = 128
+batch_size = 64
 mono_batch_size = 8
 # clip_grad = 5.0
 lr_decay = 0.2
-max_epoch = 2
+max_epoch = 4
 max_epoch_pretraining = 1
 max_epoch_pretraining_encoder = 1
 patience = 3
@@ -50,13 +50,17 @@ num_layers_encoder = 2
 num_layers_decoder = 2
 bidirectional_encoder = True
 residual = False
-hidden_size_encoder = 256
-hidden_size_decoder = 512
-embed_size = 256
+# hidden_size_encoder = 256
+# hidden_size_decoder = 512
+# embed_size = 256
+hidden_size_encoder = 128
+hidden_size_decoder = 256
+embed_size = 32
 has_output_layer = True
 dropout_layers = 0.5
 dropout_lstm_states = 0.
-context_size = 256
+# context_size = 256
+context_size = 128
 
 # Search parameters
 beam_size = 5

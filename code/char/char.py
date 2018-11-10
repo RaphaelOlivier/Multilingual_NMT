@@ -21,12 +21,18 @@ def train():
         print_file = sys.stdout
     train_data_src = read_corpus(paths.train_source, source='src', char=True)
     train_data_tgt = read_corpus(paths.train_target, source='tgt', char=True)
+    if config.language_tokens:
+        train_data_src = [["__LOW__"] + sent for sent in train_data_src]
 
     dev_data_src = read_corpus(paths.dev_source, source='src', char=True)
     dev_data_tgt = read_corpus(paths.dev_target, source='tgt', char=True)
+    if config.language_tokens:
+        dev_data_src = [["__LOW__"] + sent for sent in dev_data_src]
 
     train_data_src_helper = read_corpus(paths.train_source_helper, source='src', char=True)
     train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt', char=True)
+    if config.language_tokens:
+        train_data_src_helper = [["__HELPER__"] + sent for sent in train_data_src_helper]
 
     train_data = zip_data(train_data_src, train_data_tgt, "low",
                           train_data_src_helper, train_data_tgt_helper, "helper")
@@ -123,6 +129,8 @@ def decode():
         data_src = read_corpus(paths.dev_source, source='src', char=True)
         data_tgt = read_corpus(paths.dev_target, source='tgt', char=True)
         data_tgt_path = paths.dev_target
+    if config.language_tokens:
+        data_src = [["__LOW__"] + sent for sent in data_src]
 
     print(f"load model from {paths.model(helper=False)}.char", file=sys.stderr)
     model = CharModel.load(paths.model(helper=False) + ".char")
