@@ -37,6 +37,7 @@ class NMTModel:
             self.encoder.parameters(), lr=config.lr, weight_decay=config.weight_decay)
         self.gpu = False
         self.initialize()
+        self.freeze_embeddings = True
         print(len(self.vocab.src(False)))
         # initialize neural network layers...
 
@@ -76,7 +77,7 @@ class NMTModel:
         loss = self.decode(src_encodings, decoder_init_state, tgt_sents)
 
         if update_params:
-            self.step(loss)
+            self.step(loss, freeze_dec_embeddings=self.freeze_embeddings)
         if self.gpu:
             loss = loss.cpu()
         return loss.detach().numpy()
@@ -212,16 +213,16 @@ class NMTModel:
     def step(self, loss, freeze_dec_embeddings=True, **kwargs):
 
         if freeze_dec_embeddings and (config.encoder_embeddings or config.decoder_embeddings):
-            dec_embeddings = self.decoder.lookup.weight.detach()
+            dec_embeddings = self.decoder.lookup.weight.data.detach()
 
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
 
         if freeze_dec_embeddings and (config.encoder_embeddings or config.decoder_embeddings):
-            new_tensor = self.decoder.lookup.weight.detach()
+            new_tensor = self.decoder.lookup.weight.data.detach()
             new_tensor[4:] = dec_embeddings[4:]
-            self.decoder.lookup.weight = new_tensor
+            self.decoder.lookup.weight.data.copy_(new_tensor)
 
 
 
