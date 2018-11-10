@@ -20,9 +20,7 @@ decode_output_suffix = ".test.txt" if config.test else ".valid.txt"
 decode_output = results_folder+"decode."+config.language+decode_output_suffix
 
 
-def get_data_path(set, mode, helper=False, lg=None, subwords=None):
-    if subwords is None:
-        subwords = config.subwords
+def get_data_path(set, mode, helper=False, lg=None, subwords=False):
     if subwords:
         prefix = data_subwords_folder
     else:

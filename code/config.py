@@ -1,6 +1,6 @@
 import torch
 
-language = "gl"
+language = "az"
 
 
 def get_helper_language(lg):
@@ -64,10 +64,11 @@ vocab_size = 50000
 vocab_mono = False
 max_len_corpus = 1000
 merge_target_vocab = False
-subwords = False
+subwords = True
+subwords_on_monolingual = False
 subwords_model_type = "unigram"
-subwords_vocab_size = {"az": 10000 if use_helper else 3000,
-                       "be": 10000 if use_helper else 3000, "gl": 10000 if use_helper else 4000}
+subwords_vocab_size = {"az": 8000 if use_helper else 2000,
+                       "be": 8000 if use_helper else 2000, "gl": 8000 if use_helper else 2000}
 # Display options
 valid_niter = 500
 log_every = 50

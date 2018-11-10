@@ -18,15 +18,19 @@ def train(lg, helper):
     target_folder = paths.data_subwords_folder
     model_type = config.subwords_model_type
     suffix = ".with_helper" if helper else ".no_helper"
+    if config.subwords_on_monolingual:
+        suffix += ".with_mono"
     model_prefix = target_folder+model_type+"."+lg+suffix
-
+    if config.subwords_on_monolingual:
+        lr_path = get_mono_path(lg)
+    else:
+        lr_path = paths.get_data_path(set="train", mode="sc", lg=lg, subwords=False, helper=False)
     if not helper:
-        train_source_path = paths.get_data_path(
-            set="train", mode="sc", lg=lg, subwords=False, helper=False)
+        train_source_path = lr_path
     else:
         print("Generate temp file")
         temp_path = paths.data_bilingual_folder+"temp.txt"
-        lr_file = paths.get_data_path(set="train", mode="sc", lg=lg, subwords=False, helper=False)
+        lr_file = lr_path
         hr_file = paths.get_data_path(set="train", mode="sc", lg=lg, subwords=False, helper=True)
         with open(temp_path, 'w') as f, open(lr_file, 'r') as s1, open(hr_file, 'r') as s2:
             for line in s1:
@@ -44,23 +48,33 @@ def train(lg, helper):
 
 
 class SubwordReader:
-    def __init__(self, lg):
+    def __init__(self, lg=None):
         if lg is None:
             lg = config.language
+        if lg == 'ru':
+            lg = 'be'
+        if lg == 'pt':
+            lg = 'gl'
+        if lg == 'tr':
+            lg = 'az'
         folder = paths.data_subwords_folder
         model_type = config.subwords_model_type
         helper = config.use_helper or config.mode != "normal"
         suffix = ".with_helper" if helper else ".no_helper"
+        if config.subwords_on_monolingual:
+            suffix += ".with_mono"
         model_prefix = folder+model_type+"."+lg+suffix
         model_path = model_prefix+".model"
-        sp = spm.SentencePieceProcessor()
-        sp.Load(model_path)
 
-    def line_to_subwords(line):
-        return sp.EncodeAsPieces(line)
+        self.sp = spm.SentencePieceProcessor()
+        print("Loading subword model :", model_path)
+        self.sp.Load(model_path)
 
-    def subwords_to_line(l):
-        return sp.DecodePieces(l)
+    def line_to_subwords(self, line):
+        return self.sp.EncodeAsPieces(line)
+
+    def subwords_to_line(self, l):
+        return self.sp.DecodePieces(l)
 
 
 def main():

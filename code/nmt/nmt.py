@@ -38,7 +38,7 @@ def train(helper=False):
     train_batch_size = config.batch_size
     valid_niter = config.valid_niter
     log_every = config.log_every
-    model_save_path = paths.model(helper=False)
+    model_save_path = paths.model(helper=False) + (".subwords" if config.subwords else "")
     max_epoch = config.max_epoch
 
     if config.sanity:
@@ -127,11 +127,11 @@ def decode(helper=False):
         data_tgt_path = paths.dev_target
 
     print(f"load model from {paths.model(helper=helper)}", file=sys.stderr)
-    model = NMTModel.load(paths.model(helper=helper))
+    model = NMTModel.load(paths.model(helper=helper) + (".subwords" if config.subwords else ""))
     if config.cuda:
         model.to_gpu()
     model.eval()
-    max_step = None
+    max_step = max_decoding_time_step
     if config.sanity:
         max_step = 3
 

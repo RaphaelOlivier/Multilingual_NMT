@@ -45,16 +45,17 @@ def input_transpose(sents, pad_token):
     return sents_t
 
 
-def read_corpus(file_path, source='src'):
-    if config.subwords:
-        sub = SubwordReader.SubwordReader()
+def read_corpus(file_path, source='src', lg=None):
+    if config.subwords and source == 'src':
+        sub = subwords.SubwordReader(lg)
     print(file_path)
     test = "test" in file_path
     data = []
     counter = 0
     for line in open(file_path):
-        if config.subwords:
+        if config.subwords and source == 'src':
             sent = sub.line_to_subwords(line)
+            # print(sent)
         else:
             sent = line.strip().split(' ')
         # only append <s> and </s> to the target sentence
@@ -62,7 +63,6 @@ def read_corpus(file_path, source='src'):
             sent = ['<s>'] + sent + ['</s>']
         if len(sent) <= config.max_len_corpus or test:
             data.append(sent)
-        print(sent)
         else:
             counter += 1
     print("Eliminated :", counter, "out of", len(data))
@@ -71,14 +71,15 @@ def read_corpus(file_path, source='src'):
 
 
 def write_sents(sents, path):
-    if config.subwords:
-        sub = SubwordReader.SubwordReader()
+    # if config.subwords:
+    #    sub = subwords.SubwordReader()
     with open(path, 'w') as f:
         for sent in sents:
-            if config.subwords:
-                line = sub.subwords_to_line(sent)
-            else:
-                line = ' '.join(sent)
+            # if config.subwords:
+            #    line = sub.subwords_to_line(sent)
+            # else:
+            #    line = ' '.join(sent)
+            line = ' '.join(sent)
             f.write(line + '\n')
 
 
