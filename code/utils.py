@@ -4,6 +4,7 @@ from collections import namedtuple
 import config
 import numpy as np
 from torch.nn import Parameter
+import subwords
 
 Hypothesis = namedtuple('Hypothesis', ['value', 'score'])
 
@@ -44,13 +45,19 @@ def input_transpose(sents, pad_token):
     return sents_t
 
 
-def read_corpus(file_path, source='src'):
+def read_corpus(file_path, source='src', lg=None):
+    if config.subwords and source == 'src':
+        sub = subwords.SubwordReader(lg)
     print(file_path)
     test = "test" in file_path
     data = []
     counter = 0
     for line in open(file_path):
-        sent = line.strip().split(' ')
+        if config.subwords and source == 'src':
+            sent = sub.line_to_subwords(line)
+            # print(sent)
+        else:
+            sent = line.strip().split(' ')
         # only append <s> and </s> to the target sentence
         if source == "tgt":
             sent = ['<s>'] + sent + ['</s>']
@@ -61,6 +68,19 @@ def read_corpus(file_path, source='src'):
     print("Eliminated :", counter, "out of", len(data))
 
     return data
+
+
+def write_sents(sents, path):
+    # if config.subwords:
+    #    sub = subwords.SubwordReader()
+    with open(path, 'w') as f:
+        for sent in sents:
+            # if config.subwords:
+            #    line = sub.subwords_to_line(sent)
+            # else:
+            #    line = ' '.join(sent)
+            line = ' '.join(sent)
+            f.write(line + '\n')
 
 
 def batch_iter_one_way(data, batch_size, shuffle=False, key=None):
@@ -84,7 +104,7 @@ def batch_iter_one_way(data, batch_size, shuffle=False, key=None):
         yield src_sents, tgt_sents, key
 
 
-def batch_iter(data, batch_size, shuffle=False):
+def batch_iter(data, batch_size, shuffle=False, sampling_multi=1):
 
     if len(data.keys()) == 1:
         for t in batch_iter_one_way(list(data.values())[0], batch_size, shuffle=shuffle, key=list(data.keys())[0]):
@@ -101,8 +121,15 @@ def batch_iter(data, batch_size, shuffle=False):
                 np.random.shuffle(a)
         current_index = [0 for k in keys]
 
-        for j in range(batch_num):
-            for i, k in enumerate(keys):
+        keys_indexes = range(len(keys))
+        if len(keys) == 2:
+            max_key_id = np.argmax(lens)
+            min_key_id = 1 - max_key_id
+            keys_indexes = [min_key_id] + sampling_multi*[max_key_id]
+
+        for j in range(0, batch_num, sampling_multi):
+            for i in keys_indexes:
+                k = keys[i]
                 if current_index[i] >= lens[i]:
                     current_index[i] = 0
                     if shuffle:

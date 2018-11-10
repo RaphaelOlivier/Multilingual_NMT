@@ -7,7 +7,7 @@ import torch
 from typing import List
 from docopt import docopt
 
-from utils import read_corpus, zip_data
+from utils import read_corpus, zip_data, write_sents
 from vocab import Vocab, VocabEntry, MultipleVocab
 from nmt.nmtmodel import NMTModel
 import config
@@ -38,7 +38,7 @@ def train(helper=False):
     train_batch_size = config.batch_size
     valid_niter = config.valid_niter
     log_every = config.log_every
-    model_save_path = paths.model(helper=False)
+    model_save_path = paths.model(helper=False) + (".subwords" if config.subwords else "")
     max_epoch = config.max_epoch
 
     if config.sanity:
@@ -127,11 +127,11 @@ def decode(helper=False):
         data_tgt_path = paths.dev_target
 
     print(f"load model from {paths.model(helper=helper)}", file=sys.stderr)
-    model = NMTModel.load(paths.model(helper=helper))
+    model = NMTModel.load(paths.model(helper=helper) + (".subwords" if config.subwords else ""))
     if config.cuda:
         model.to_gpu()
     model.eval()
-    max_step = None
+    max_step = config.max_decoding_time_step
     if config.sanity:
         max_step = 3
 
@@ -141,12 +141,11 @@ def decode(helper=False):
         top_hypotheses = [hyps[0] for hyps in hypotheses]
         #bleu_score = routine.compute_corpus_level_bleu_score(data_tgt, top_hypotheses)
         #print(f'Corpus BLEU: {bleu_score}', file=sys.stderr)
-
-    with open(paths.decode_output, 'w') as f:
-        for src_sent, hyps in zip(data_src, hypotheses):
-            top_hyp = hyps[0]
-            hyp_sent = ' '.join(top_hyp.value)
-            f.write(hyp_sent + '\n')
+    lines = []
+    for src_sent, hyps in zip(data_src, hypotheses):
+        top_hyp = hyps[0]
+        lines.append(top_hyp.value)
+    write_sents(lines, paths.decode_output)
 
     bleu_command = "perl scripts/multi-bleu.perl "+data_tgt_path+" < "+paths.decode_output
     os.system(bleu_command)

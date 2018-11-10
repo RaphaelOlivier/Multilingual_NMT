@@ -7,10 +7,10 @@ import torch
 from typing import List
 from docopt import docopt
 
-from utils import read_corpus, zip_data
+from utils import read_corpus, zip_data, write_sents
 from vocab import Vocab, VocabEntry, MultipleVocab
 from shared.sharedmodel import SharedModel
-import config
+import shared.sharedconfig as config
 from nmt import routine
 import paths
 
@@ -37,6 +37,8 @@ def train():
     log_every = config.log_every
     model_save_path = paths.model(helper=False) + ".shared"
     max_epoch = config.max_epoch
+
+    sampling = config.sampling
 
     if config.sanity:
         log_every = 1
@@ -83,7 +85,7 @@ def train():
                                train_data_src, train_data_tgt, "low")
         print("Pretraining the encoder")
         routine.train_encoder(model, source_data, dev_data, model_save_path,
-                              config.mono_batch_size, valid_niter, log_every, config.max_epoch_pretraining_encoder, lr, max_patience, max_num_trial, lr_decay)
+                              config.mono_batch_size, valid_niter, log_every, config.max_epoch_pretraining_encoder, lr, max_patience, max_num_trial, lr_decay, sampling_multi=sampling)
 
     if pretraining:
         #print("Pretraining the encoder")
@@ -99,10 +101,10 @@ def train():
         target_data = zip_data(train_helper_src, train_helper_tgt, "one")
         print("Pretraining the decoder")
         routine.train_decoder(model, target_data, dev_data, model_save_path,
-                              train_batch_size, valid_niter, log_every, config.max_epoch_pretraining, lr, max_patience, max_num_trial, lr_decay)
+                              train_batch_size, valid_niter, log_every, config.max_epoch_pretraining, lr, max_patience, max_num_trial, lr_decay, sampling_multi=sampling)
 
     model = routine.train_model(model, train_data, dev_data, model_save_path,
-                                train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay)
+                                train_batch_size, valid_niter, log_every, max_epoch, lr, max_patience, max_num_trial, lr_decay, sampling_multi=sampling)
     model.to_cpu()
     exit(0)
 
@@ -139,11 +141,11 @@ def decode():
         #bleu_score = routine.compute_corpus_level_bleu_score(data_tgt, top_hypotheses)
         #print(f'Corpus BLEU: {bleu_score}', file=sys.stderr)
 
-    with open(paths.decode_output, 'w') as f:
-        for src_sent, hyps in zip(data_src, hypotheses):
-            top_hyp = hyps[0]
-            hyp_sent = ' '.join(top_hyp.value)
-            f.write(hyp_sent + '\n')
+    lines = []
+    for src_sent, hyps in zip(data_src, hypotheses):
+        top_hyp = hyps[0]
+        lines.append(top_hyp.value)
+    write_sents(lines, paths.decode_output)
 
     bleu_command = "perl scripts/multi-bleu.perl "+data_tgt_path+" < "+paths.decode_output
     os.system(bleu_command)
