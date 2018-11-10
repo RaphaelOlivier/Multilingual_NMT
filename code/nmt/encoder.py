@@ -28,7 +28,7 @@ class Encoder(nn.Module):
         self.use_state_projection = False
         if state_projection is not None:
             self.use_state_projection = True
-            self.state_projection = nn.Linear(context_projection, state_projection)
+            self.state_projection = nn.Linear(self.hidden_size * (2 if bidirectional else 1), state_projection)
 
         self.out_forward = nn.Linear(self.hidden_size, self.embed_size)
         self.criterion = nn.CrossEntropyLoss(reduction="sum")
