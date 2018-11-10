@@ -95,7 +95,7 @@ def train():
         # for lg in config.all_languages:
         #    target_data_tgt = target_data_tgt + \
         #        read_corpus(paths.get_data_path(set="train", mode="tg", lg=lg))
-        train_helper_tgt = read_corpus(paths.train_target_helper)
+        train_helper_tgt = read_corpus(paths.train_target_helper, source='tgt')
         train_helper_src = [[] for i in range(len(train_helper_tgt))]
 
         target_data = zip_data(train_helper_src, train_helper_tgt, "one")
