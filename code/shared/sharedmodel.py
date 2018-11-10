@@ -24,9 +24,6 @@ class SharedModel(NMTModel):
         model = SharedModel()
         print("Loading encoder")
         dict = torch.load(enc_path)
-        for name, params in dict.items():
-            print(name)
-            print(params.shape)
         load_partial_state_dict(model.encoder, torch.load(enc_path))
         print("Loading decoder")
         load_partial_state_dict(model.decoder, torch.load(dec_path))
