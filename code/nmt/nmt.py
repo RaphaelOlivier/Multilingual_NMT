@@ -24,8 +24,8 @@ def train(helper=False):
 
     if config.use_helper:
 
-        train_data_src_helper = read_corpus(paths.train_source_helper, source='src')
-        train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt')
+        train_data_src_helper = read_corpus(paths.train_source_helper, source='src', lg=config.helper_language(config.language))
+        train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt', lg=config.helper_language(config.language))
         train_data_src = train_data_src + train_data_src_helper
         train_data_tgt = train_data_tgt + train_data_tgt_helper
 
