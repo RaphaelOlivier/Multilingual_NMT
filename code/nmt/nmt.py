@@ -131,7 +131,7 @@ def decode(helper=False):
     if config.cuda:
         model.to_gpu()
     model.eval()
-    max_step = max_decoding_time_step
+    max_step = config.max_decoding_time_step
     if config.sanity:
         max_step = 3
 
