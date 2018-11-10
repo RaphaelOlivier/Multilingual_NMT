@@ -234,12 +234,16 @@ class NMTModel:
         for name, param  in self.decoder.named_parameters():
             torch.nn.init.uniform_(param, -0.1, 0.1)
 
-    def initialize_embeddings(self, encoder_embeddings, decoder_embeddings, freeze=True):
+    def initialize_enc_embeddings(self, encoder_embeddings, freeze=True):
 
         self.encoder.lookup.weight.data.copy_(torch.from_numpy(encoder_embeddings))
-        self.decoder.lookup.weight.data.copy_(torch.from_numpy(decoder_embeddings))
         if freeze:
             self.encoder.lookup.weight.requires_grad = False
+
+    def initialize_dec_embeddings(self, decoder_embeddings, freeze=True):
+
+        self.decoder.lookup.weight.data.copy_(torch.from_numpy(decoder_embeddings))
+        if freeze:
             self.decoder.lookup.weight.requires_grad = False
 
     def load_params(self, model_path):

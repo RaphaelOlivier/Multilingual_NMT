@@ -56,3 +56,17 @@ data_monolingual = "data/monolingual/"+config.language+".wiki.txt"
 
 def get_fasttext_path(lg='en'):
     return "data/monolingual/wikivecs/wiki." + lg + ".vec"
+
+def get_dec_vec():
+    return "data/monolingual/wikivecs/en_embeddings.npy"
+
+def get_enc_vec():
+    if config.mode == "normal":
+        return "data/monolingual/wikivecs/{}_embeddings.npy".format(config.language)
+    if config.mode == "multi":
+        return "data/monolingual/wikivecs/{}_embeddings.npy".format(config.language), \
+               "data/monolingual/wikivecs/{}_embeddings.npy".format(config.helper_language)
+    if config.mode == "shared":
+        raise NotImplementedError
+    if config.mode == "transfer":
+        raise NotImplementedError

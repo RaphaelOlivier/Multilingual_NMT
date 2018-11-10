@@ -182,7 +182,7 @@ if __name__ == '__main__':
                   len(all_vocabs[lg1].src), len(all_vocabs[lg1].tgt))
     """
     main_vocab = MultipleVocab(all_vocabs)
-    if config.pretrained_embeddings:
+    if config.encoder_embeddings:
         create_all_embeddings(main_vocab)
     pickle.dump(main_vocab, open(paths.vocab, 'wb'))
     print('vocabulary saved to %s' % paths.vocab)

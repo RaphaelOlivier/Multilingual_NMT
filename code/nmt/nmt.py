@@ -59,9 +59,17 @@ def train(helper=False):
             print("Impossible to load the model ; creating a new one.")
     if not loaded_model:
         model = NMTModel()
-    # if config.pretrained_embeddings and config.mode == "normal":
-    #     encoder_embeddings =
-    #     model.initialize_embeddings(encoder_embeddings, decoder_embeddings)
+    if config.encoder_embeddings:
+        if config.mode == "normal":
+            encoder_embeddings = np.load(paths.get_enc_vec())
+            model.initialize_enc_embeddings(encoder_embeddings)
+        if config.mode == "multi":
+            lrl_embedding_path, hrl_embedding_path = paths.get_enc_vec()
+            lrl_embedding, hrl_embedding = np.load(lrl_embedding_path), np.load(hrl_embedding_path)
+            model.initialize_enc_embeddings((lrl_embedding, hrl_embedding))
+    if config.decoder_embeddings:
+        decoder_embeddings = np.load(paths.get_dec_vec())
+        model.initialize_dec_embeddings(decoder_embeddings)
 
     if config.cuda:
         model.to_gpu()
