@@ -1,6 +1,6 @@
 import torch
 
-language = "az"
+language = "gl"
 
 
 def get_helper_language(lg):
@@ -21,12 +21,12 @@ sanity = False
 load = True
 pretraining = True
 pretraining_encoder = False
-replace = True
+replace = False
 seed = 1996
 test = True
 cuda = torch.cuda.is_available()
 target_in_decode = True
-use_helper = True
+use_helper = False
 # flip_source = False  # keep at false
 use_helper = use_helper and language in {"az", "be", "gl"}
 # General training parameters
@@ -67,11 +67,11 @@ merge_target_vocab = False
 subwords = True
 subwords_on_monolingual = False
 subwords_model_type = "unigram"
-subwords_vocab_size = {"az": 8000 if use_helper else 2000,
-                       "be": 8000 if use_helper else 2000, "gl": 8000 if use_helper else 2000}
+subwords_vocab_size = {"az": 8000 if use_helper else 8000,
+                       "be": 8000 if use_helper else 8000, "gl": 8000 if use_helper else 8000}
 # Display options
 valid_niter = 500
 log_every = 50
 
 # Low resource options
-mode = "normal"
+mode = "transfer"

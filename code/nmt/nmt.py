@@ -49,6 +49,7 @@ def train(helper=False):
     pretraining = config.pretraining
     pretraining_encoder = config.pretraining_encoder
     if config.load:
+        model = NMTModel.load(model_save_path)
         try:
             model = NMTModel.load(model_save_path)
             pretraining = False
