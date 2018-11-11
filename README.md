@@ -2,7 +2,7 @@
 Modular set of models for multilingual translationapplied to low-resource languages
 
 ## Organization
-* `results` : our decoding results on the validation and test sets
+* `decoded_results` : our decoding results on the validation and test sets
 * `scripts` : training and decoding scripts
 * `code` : All pytohn code
     * `paths.py` : paths to all data files
