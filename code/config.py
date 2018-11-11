@@ -32,8 +32,8 @@ use_helper = use_helper and language in {"az", "be", "gl"}
 # General training parameters
 lr = 0.001
 weight_decay = 0.00001
-batch_size = 16
-mono_batch_size = 8
+batch_size = 32
+mono_batch_size = 32
 #teacher_forcing = 0.9
 # clip_grad = 5.0
 lr_decay = 0.2
@@ -67,11 +67,10 @@ merge_target_vocab = False
 subwords = True
 subwords_on_monolingual = False
 subwords_model_type = "unigram"
-subwords_vocab_size = {"az": 8000 if use_helper else 8000,
-                       "be": 8000 if use_helper else 8000, "gl": 8000 if use_helper else 8000}
+subwords_vocab_size = {"az": 8000, "be": 8000, "gl": 8000}
 # Display options
 valid_niter = 500
 log_every = 50
 
 # Low resource options
-mode = "transfer"
+mode = "shared"

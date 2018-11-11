@@ -43,6 +43,12 @@ def get_mono_path(lg=None):
     return "data/monolingual/"+lg+".wiki.txt"
 
 
+def get_train_and_mono_path(lg=None):
+    if lg == None:
+        lg = config.language
+    return "data/monolingual/"+lg+"_mono.shuffled.txt"
+
+
 train_source = get_data_path("train", "sc", helper=False)
 train_target = get_data_path("train", "tg", helper=False)
 train_source_helper = get_data_path("train", "sc", helper=True)
