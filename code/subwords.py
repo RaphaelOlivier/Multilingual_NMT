@@ -9,9 +9,15 @@ def train_model(lg, train_source_path, target):
     print('\nTrain subword model for ' + lg)
 
     vocab_size = str(config.subwords_vocab_size[lg])
+    model_type = config.subwords_model_type
     print("Train subwords model")
+<<<<<<< HEAD
+    spm.SentencePieceTrainer.Train('--input='+train_source_path +
+                                   ' --model_prefix='+target+' --model_type='+model_type+' --character_coverage=1.0 --vocab_size='+vocab_size)
+=======
     spm.SentencePieceTrainer.Train('--input=' + train_source_path +
                                    ' --model_prefix=' + target + ' --character_coverage=1.0 --vocab_size=' + vocab_size)
+>>>>>>> dc82d17e7f2d2ea94469b16540c785fdb43bb055
 
 
 def train(lg):
@@ -39,8 +45,13 @@ class SubwordReader:
         suffix = ""
         if config.subwords_on_monolingual:
             suffix += ".with_mono"
+<<<<<<< HEAD
+        model_prefix = folder+model_type+"."+lg  # + suffix
+        model_path = model_prefix+".model"
+=======
         model_prefix = folder + model_type + "." + lg + suffix
         model_path = model_prefix + ".model"
+>>>>>>> dc82d17e7f2d2ea94469b16540c785fdb43bb055
 
         self.sp = spm.SentencePieceProcessor()
         print("Loading subword model :", model_path)

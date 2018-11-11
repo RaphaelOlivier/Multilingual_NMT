@@ -19,14 +19,16 @@ def train():
     print_file = sys.stderr
     if config.printout:
         print_file = sys.stdout
-    train_data_src = read_corpus(paths.train_source, source='src')
+    train_data_src = read_corpus(paths.train_source, source='src', lg=config.language)
     train_data_tgt = read_corpus(paths.train_target, source='tgt')
 
-    dev_data_src = read_corpus(paths.dev_source, source='src')
+    dev_data_src = read_corpus(paths.dev_source, source='src', lg=config.language)
     dev_data_tgt = read_corpus(paths.dev_target, source='tgt')
 
-    train_data_src_helper = read_corpus(paths.train_source_helper, source='src', lg=config.get_helper_language(config.language))
-    train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt', lg=config.get_helper_language(config.language))
+    train_data_src_helper = read_corpus(
+        paths.train_source_helper, source='src', lg=config.get_helper_language(config.language))
+    train_data_tgt_helper = read_corpus(
+        paths.train_target_helper, source='tgt', lg=config.get_helper_language(config.language))
 
     train_data = zip_data(train_data_src, train_data_tgt, "low",
                           train_data_src_helper, train_data_tgt_helper, "helper")
@@ -125,9 +127,9 @@ def train():
         train_helper_tgt = read_corpus(paths.train_target_helper, source='tgt')
         train_helper_src = [[] for i in range(len(train_helper_tgt))]
 
-        target_data = zip_data(train_helper_src, train_helper_tgt, "one")
+        #target_data = zip_data(train_helper_src, train_helper_tgt, "one")
         print("Pretraining the decoder")
-        routine.train_decoder(model, target_data, dev_data, model_save_path,
+        routine.train_decoder(model, train_data, dev_data, model_save_path,
                               train_batch_size, valid_niter, log_every, config.max_epoch_pretraining, lr, max_patience, max_num_trial, lr_decay, sampling_multi=sampling)
 
     model = routine.train_model(model, train_data, dev_data, model_save_path,

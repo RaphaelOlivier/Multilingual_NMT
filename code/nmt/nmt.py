@@ -50,6 +50,7 @@ def train(helper=False):
     pretraining_encoder = config.pretraining_encoder
     loaded_model = False
     if config.load:
+        model = NMTModel.load(model_save_path)
         try:
             model = NMTModel.load(model_save_path)
             pretraining = False
