@@ -1,6 +1,6 @@
 import torch
 
-language = "gl"
+language = "az"
 
 
 def get_helper_language(lg):
@@ -18,13 +18,13 @@ all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 # General information
 printout = True
 sanity = False
-load = True
+load = False
 pretraining = True
 pretraining_encoder = False
 encoder_embeddings = False
 decoder_embeddings = True
 thaw_embeddings = False
-replace = True
+replace = False
 seed = 1996
 test = False
 cuda = torch.cuda.is_available()
@@ -33,7 +33,7 @@ use_helper = True
 # flip_source = False  # keep at false
 use_helper = use_helper and language in {"az", "be", "gl"}
 # General training parameters
-lr = 0.001
+lr = 0.002
 weight_decay = 0.00001
 batch_size = 32
 mono_batch_size = 32
