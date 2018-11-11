@@ -19,7 +19,7 @@ from utils import read_corpus, input_transpose
 
 import config
 import paths
-
+from embeddings.load_fasttext import create_all_embeddings
 
 class VocabEntry(object):
     def __init__(self):
@@ -182,6 +182,7 @@ if __name__ == '__main__':
                   len(all_vocabs[lg1].src), len(all_vocabs[lg1].tgt))
     """
     main_vocab = MultipleVocab(all_vocabs)
-
+    if config.decoder_embeddings or config.encoder_embeddings:
+        create_all_embeddings(main_vocab)
     pickle.dump(main_vocab, open(paths.vocab, 'wb'))
     print('vocabulary saved to %s' % paths.vocab)
