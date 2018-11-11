@@ -126,7 +126,7 @@ def train_model(model, train_data, dev_data, model_save_path, train_batch_size=N
                 elif patience < max_patience:
                     patience += 1
                     print('hit patience %d' % patience, file=print_file)
-                    if sampling_multi > 0:
+                    if sampling_multi > 1:
                         sampling_multi -= 1
 
                     if patience == max_patience:
@@ -138,6 +138,10 @@ def train_model(model, train_data, dev_data, model_save_path, train_batch_size=N
 
                         # decay learning rate, and restore from previously best checkpoint
                         lr = lr * lr_decay
+
+                        # unfreeze embeddings if used
+                        if config.thaw_embeddings:
+                            model.freeze_embeddings = False
 
                         print('load previously best model and decay learning rate to %f' %
                               lr, file=print_file)

@@ -18,11 +18,12 @@ all_languages = ["az", "be", "ru", "gl", "pt", "tr"]
 # General information
 printout = True
 sanity = False
-load = False
+load = True
 pretraining = True
 pretraining_encoder = False
 encoder_embeddings = False
 decoder_embeddings = True
+thaw_embeddings = False
 replace = True
 seed = 1996
 test = False
