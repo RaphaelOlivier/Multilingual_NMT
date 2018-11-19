@@ -61,6 +61,15 @@ class MultiWayModel(NMTModel):
     def create_two_vocabs(self):
         return {"low": self.vocab.src(helper=False), "helper": self.vocab.src(helper=True)}
 
+    def initialize_enc_embeddings(self, embedding_pair, freeze=False):
+
+        lrl_embedding, hrl_embedding = embedding_pair
+        self.encoder['low'].lookup.weight.data.copy_(torch.from_numpy(lrl_embedding))
+        self.encoder['helper'].lookup.weight.data.copy_(torch.from_numpy(hrl_embedding))
+        if freeze:
+            self.encoder['low'].lookup.weight.requires_grad = False
+            self.encoder['helper'].lookup.weight.requires_grad = False
+
     def update_lr(self, lr):
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr

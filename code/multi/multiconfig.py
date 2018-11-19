@@ -2,7 +2,7 @@ from config import *
 
 embed_size_low = 256
 hidden_size_encoder_low = 256
-num_layers_encoder_low = 2
+num_layers_encoder_low = 3
 
 embed_size_helper = 256
 hidden_size_encoder_helper = 256

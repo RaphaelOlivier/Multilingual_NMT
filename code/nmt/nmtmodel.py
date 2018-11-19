@@ -22,6 +22,7 @@ class NMTModel:
         self.vocab = pickle.load(open(paths.vocab, 'rb'))
         stproj = None if (config.hidden_size_encoder * (2 if config.bidirectional_encoder else 1)
                           == config.hidden_size_decoder) else config.hidden_size_decoder
+        print(len(self.vocab.src(self.helper)))
         self.encoder = Encoder(len(self.vocab.src(self.helper))+add_tokens_src, config.embed_size, config.hidden_size_encoder, num_layers=config.num_layers_encoder,
                                bidirectional=config.bidirectional_encoder, dropout=config.dropout_layers, context_projection=None, state_projection=stproj)
         self.decoder = Decoder(len(self.vocab.tgt(self.helper)),
@@ -36,6 +37,7 @@ class NMTModel:
             self.encoder.parameters(), lr=config.lr, weight_decay=config.weight_decay)
         self.gpu = False
         self.initialize()
+        self.freeze_embeddings = True
         print(len(self.vocab.src(False)))
         # initialize neural network layers...
 
@@ -75,7 +77,7 @@ class NMTModel:
         loss = self.decode(src_encodings, decoder_init_state, tgt_sents)
 
         if update_params:
-            self.step(loss)
+            self.step(loss, freeze_dec_embeddings=self.freeze_embeddings)
         if self.gpu:
             loss = loss.cpu()
         return loss.detach().numpy()
@@ -209,9 +211,20 @@ class NMTModel:
         return ppl
 
     def step(self, loss, **kwargs):
+
+        if self.freeze_embeddings and (config.encoder_embeddings or config.decoder_embeddings):
+            dec_embeddings = self.decoder.lookup.weight.data.detach()
+
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
+
+        if self.freeze_embeddings and (config.encoder_embeddings or config.decoder_embeddings):
+            new_tensor = self.decoder.lookup.weight.data.detach()
+            new_tensor[4:] = dec_embeddings[4:]
+            self.decoder.lookup.weight.data.copy_(new_tensor)
+
+
 
     @staticmethod
     def load(model_path: str):
@@ -228,10 +241,26 @@ class NMTModel:
 
     def initialize(self):
 
-        for param in self.encoder.parameters():
+        for name, param in self.encoder.named_parameters():
             torch.nn.init.uniform_(param, -0.1, 0.1)
-        for param in self.decoder.parameters():
+        for name, param  in self.decoder.named_parameters():
             torch.nn.init.uniform_(param, -0.1, 0.1)
+
+    def initialize_enc_embeddings(self, encoder_embeddings, freeze=False):
+
+        print(self.encoder.lookup.weight.data.shape)
+        self.encoder.lookup.weight.data.copy_(torch.from_numpy(encoder_embeddings))
+        print(self.encoder.lookup.weight.data.shape)
+        if freeze:
+            self.encoder.lookup.weight.requires_grad = False
+
+    def initialize_dec_embeddings(self, decoder_embeddings, freeze=False):
+
+        print(self.encoder.lookup.weight.data.shape)
+        self.decoder.lookup.weight.data.copy_(torch.from_numpy(decoder_embeddings))
+        print(self.encoder.lookup.weight.data.shape)
+        if freeze:
+            self.decoder.lookup.weight.requires_grad = False
 
     def load_params(self, model_path):
         enc_path = model_path + ".enc.pt"

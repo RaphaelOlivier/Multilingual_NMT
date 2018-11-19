@@ -19,14 +19,16 @@ def train():
     print_file = sys.stderr
     if config.printout:
         print_file = sys.stdout
-    train_data_src = read_corpus(paths.train_source, source='src')
+    train_data_src = read_corpus(paths.train_source, source='src', lg=config.language)
     train_data_tgt = read_corpus(paths.train_target, source='tgt')
 
-    dev_data_src = read_corpus(paths.dev_source, source='src')
+    dev_data_src = read_corpus(paths.dev_source, source='src', lg=config.language)
     dev_data_tgt = read_corpus(paths.dev_target, source='tgt')
 
-    train_data_src_helper = read_corpus(paths.train_source_helper, source='src', lg=config.get_helper_language(config.language))
-    train_data_tgt_helper = read_corpus(paths.train_target_helper, source='tgt', lg=config.get_helper_language(config.language))
+    train_data_src_helper = read_corpus(
+        paths.train_source_helper, source='src', lg=config.get_helper_language(config.language))
+    train_data_tgt_helper = read_corpus(
+        paths.train_target_helper, source='tgt', lg=config.get_helper_language(config.language))
 
     train_data = zip_data(train_data_src, train_data_tgt, "low",
                           train_data_src_helper, train_data_tgt_helper, "helper")
@@ -47,16 +49,43 @@ def train():
         max_epoch = 2
     pretraining = config.pretraining
     pretraining_encoder = config.pretraining_encoder
+
+    loaded_model = False
     if config.load:
         try:
             model = SharedModel.load(model_save_path)
             pretraining = False
             pretraining_encoder = False
+            loaded_model = True
         except:
             print("Impossible to load the model ; creating a new one.")
-            model = SharedModel()
-    else:
+    if not loaded_model:
         model = SharedModel()
+        if config.encoder_embeddings:
+            if config.mode == "normal":
+                print("loading encoder embeddings")
+                encoder_embeddings = np.load(paths.get_enc_vec())
+                model.initialize_enc_embeddings(encoder_embeddings)
+            if config.mode == "multi":
+                print("loading encoder embeddings")
+                lrl_embedding_path, hrl_embedding_path = paths.get_enc_vec()
+                lrl_embedding, hrl_embedding = np.load(lrl_embedding_path), np.load(hrl_embedding_path)
+                model.initialize_enc_embeddings((lrl_embedding, hrl_embedding))
+        if config.decoder_embeddings:
+            print("loading decoder embeddings")
+            decoder_embeddings = np.load(paths.get_dec_vec())
+            model.initialize_dec_embeddings(decoder_embeddings)
+
+    # if config.load:
+    #     try:
+    #         model = SharedModel.load(model_save_path)
+    #         pretraining = False
+    #         pretraining_encoder = False
+    #     except:
+    #         print("Impossible to load the model ; creating a new one.")
+    #         model = SharedModel()
+    # else:
+    #     model = SharedModel()
 
     if config.cuda:
         model.to_gpu()
@@ -95,12 +124,12 @@ def train():
         # for lg in config.all_languages:
         #    target_data_tgt = target_data_tgt + \
         #        read_corpus(paths.get_data_path(set="train", mode="tg", lg=lg))
-        train_helper_tgt = read_corpus(paths.train_target_helper)
+        train_helper_tgt = read_corpus(paths.train_target_helper, source='tgt')
         train_helper_src = [[] for i in range(len(train_helper_tgt))]
 
-        target_data = zip_data(train_helper_src, train_helper_tgt, "one")
+        #target_data = zip_data(train_helper_src, train_helper_tgt, "one")
         print("Pretraining the decoder")
-        routine.train_decoder(model, target_data, dev_data, model_save_path,
+        routine.train_decoder(model, train_data, dev_data, model_save_path,
                               train_batch_size, valid_niter, log_every, config.max_epoch_pretraining, lr, max_patience, max_num_trial, lr_decay, sampling_multi=sampling)
 
     model = routine.train_model(model, train_data, dev_data, model_save_path,
