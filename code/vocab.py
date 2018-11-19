@@ -136,7 +136,7 @@ if __name__ == '__main__':
         print('read in source sentences: %s' % sc)
         print('read in target sentences: %s' % tg)
 
-        src_sents = read_corpus(sc, source='src')
+        src_sents = read_corpus(sc, source='src', lg=lg)
         tgt_sents = read_corpus(tg, source='tgt')
         mono_sents = None
         if config.vocab_mono and lg in ["az", "be", "gl"]:
@@ -147,6 +147,11 @@ if __name__ == '__main__':
         all_corpuses[lg].append(src_sents)
         all_corpuses[lg].append(tgt_sents)
         all_corpuses[lg].append(mono_sents)
+
+    if config.mode == "shared" or config.use_helper:
+        for lg1, lg2 in [("az", "tr"), ("gl", "pt"), ("be", "ru")]:
+            all_corpuses[lg1][0] = all_corpuses[lg1][0] + all_corpuses[lg2][0]
+            all_corpuses[lg1][1] = all_corpuses[lg1][1] + all_corpuses[lg2][1]
 
     if config.merge_target_vocab:
         all_tgt_sents = []
@@ -166,7 +171,16 @@ if __name__ == '__main__':
         print('generated vocabulary, language %s,  source %d words, target %d words' %
               (lg, len(vocab.src), len(vocab.tgt)))
         all_vocabs[lg] = vocab
-
+    """
+    if config.mode == "shared" or config.use_helper:
+        for lg1, lg2 in [("az", "tr"), ("gl", "pt"), ("be", "ru")]:
+            for word_helper in all_vocabs[lg2].src.word2id.keys():
+                all_vocabs[lg1].src.add(word_helper)
+            for word_helper in all_vocabs[lg2].tgt.word2id.keys():
+                all_vocabs[lg1].tgt.add(word_helper)
+            print("For shared mode, added helper words to lr vocab, new sizes",
+                  len(all_vocabs[lg1].src), len(all_vocabs[lg1].tgt))
+    """
     main_vocab = MultipleVocab(all_vocabs)
 
     pickle.dump(main_vocab, open(paths.vocab, 'wb'))

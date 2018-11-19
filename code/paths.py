@@ -13,17 +13,21 @@ def get_vocab_path(l): return "data/vocab/"+l+".bin"
 vocab = get_vocab_path(config.language)
 vocab = "data/vocab/all.bin"
 data_bilingual_folder = "data/bilingual/"
+data_subwords_folder = "data/subwords/"
 
 decode_output_suffix = ".test.txt" if config.test else ".valid.txt"
 decode_output = results_folder+"decode."+config.language+decode_output_suffix
 
 
-def get_data_path(set, mode, helper=False, lg=None):
-    prefix = data_bilingual_folder
+def get_data_path(set, mode, helper=False, lg=None, subwords=False):
+    if subwords:
+        prefix = data_subwords_folder
+    else:
+        prefix = data_bilingual_folder
     if lg == None:
         lg = config.language
-    if helper:
-        lg = config.helper_language
+    if helper and lg in ["az", "be", "gl"]:
+        lg = config.get_helper_language(lg)
     if mode == "tg":
         suffix = ".en.txt"
     else:
@@ -36,6 +40,12 @@ def get_mono_path(lg=None):
     if lg is None:
         lg = config.language
     return "data/monolingual/"+lg+".wiki.txt"
+
+
+def get_train_and_mono_path(lg=None):
+    if lg == None:
+        lg = config.language
+    return "data/monolingual/"+lg+"_mono.shuffled.txt"
 
 
 train_source = get_data_path("train", "sc", helper=False)

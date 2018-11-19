@@ -88,22 +88,26 @@ class MultipleLSTMCells(nn.Module):
             self.dropouts[i].sample_mask()
 
     def forward(self, input, previous_state=None):
-        if previous_state is None:
-            previous_state = [c.initial_state() for c in self.cells]
+        # if previous_state is None:
+        #    previous_state = [c.initial_state() for c in self.cells]
 
         new_state = previous_state[0].new_full(previous_state[0].size(), 0), \
             previous_state[1].new_full(previous_state[1].size(), 0)
 
         h = input
         for i in range(self.num_layers):
-
+            #print(h.size(), previous_state[0][i].size(), previous_state[1][i].size())
             residual = h
             h, c = self.cells[i](h, (previous_state[0][i], previous_state[1][i]))
             if self.residual and self.where_residual[i]:
                 h = residual + h
+            # print(i)
+            # print(h)
             new_state[0][i] = self.dropouts[i](h)
-            new_state[0][i] = c
+            new_state[1][i] = c
             h = self.dr(h)
+            # print("dropout")
+            # print(h)
 
         return h, new_state
 
@@ -123,7 +127,7 @@ class VariationalDropout(nn.Module):
         self.mask = torch.nn.Parameter(new_mask, requires_grad=False).float().cuda()
 
     def forward(self, h):
-        if self.training:
+        if self.training and self.p > 0:
             return h * self.mask.expand(h.size())
         else:
             return h
