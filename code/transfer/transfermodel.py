@@ -4,7 +4,6 @@ import torch
 
 import transfer.transferconfig as config
 from nmt.nmtmodel import NMTModel
-from utils import load_partial_state_dict
 
 
 class TransferModel(NMTModel):
@@ -12,6 +11,7 @@ class TransferModel(NMTModel):
         super(TransferModel, self).__init__(helper=True)
         self.saved_helper_embeddings = None
         self.saved_main_embeddings = None
+        self.optimizer_main = None
 
     def switch(self):
         get_to_gpu = False
@@ -24,7 +24,7 @@ class TransferModel(NMTModel):
                 self.encoder.lookup = nn.Embedding(
                     len(self.vocab.src(helper=False)), config.embed_size)
                 weights_indices = torch.randperm(len(self.vocab.src(helper=False)))
-                self.encoder.lookup.weight.data = self.saved_helper_embeddings.weight[weights_indices]
+                weights = self.saved_helper_embeddings.weight[weights_indices]
             else:
                 self.encoder.lookup = deepcopy(self.saved_main_embeddings)
             self.params = self.get_main_params()
@@ -33,7 +33,6 @@ class TransferModel(NMTModel):
             self.helper = False
         else:
             self.saved_main_embeddings = deepcopy(self.encoder.lookup)
-            self.encoder.lookup = deepcopy(self.saved_helper_embeddings)
             self.params = list(self.encoder.parameters())+list(self.decoder.parameters())
             self.optimizer = torch.optim.Adam(
                 self.params, lr=config.lr, weight_decay=config.weight_decay)
@@ -66,9 +65,7 @@ class TransferModel(NMTModel):
         if not helper:
             print("Switching in loading")
             model.switch()
-        print("Loading encoder")
-        load_partial_state_dict(model.encoder, torch.load(enc_path))
-        print("Loading decoder")
-        load_partial_state_dict(model.decoder, torch.load(dec_path))
+        model.encoder.load_state_dict(torch.load(enc_path))
+        model.decoder.load_state_dict(torch.load(dec_path))
 
         return model

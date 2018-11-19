@@ -1,6 +1,5 @@
 import config
 
-
 results_folder = "results/"
 
 
@@ -38,7 +37,7 @@ def get_data_path(set, mode, helper=False, lg=None, subwords=False):
 
 
 def get_mono_path(lg=None):
-    if lg == None:
+    if lg is None:
         lg = config.language
     return "data/monolingual/"+lg+".wiki.txt"
 
@@ -62,6 +61,17 @@ test_target = get_data_path("test", "tg", helper=False)
 test_source_helper = get_data_path("test", "sc", helper=True)
 test_target_helper = get_data_path("test", "tg", helper=True)
 
+elmo_directory = "data/elmo/"
+
+def get_elmo_files(lg=None):
+    if lg is None:
+        lg = config.language
+    elmo_save_dir = elmo_directory + lg + '/save_dir/'
+    options_path = elmo_save_dir + 'options.json'
+    model_path = elmo_save_dir + 'weights.hdf5'
+
+    return options_path, model_path
+  
 data_monolingual = "data/monolingual/"+config.language+".wiki.txt"
 
 def get_fasttext_path(lg='en'):
